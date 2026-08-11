@@ -20,6 +20,7 @@ import {
     IconX,
     IconArrowsSplit2,
     IconBuildingCommunity,
+    IconPower,
 } from "@tabler/icons-vue";
 import { ref, watch } from "vue";
 
@@ -31,6 +32,7 @@ const props = defineProps<{
             id: number;
             proses: string;
             urutan: number;
+            is_active: boolean;
             departemen: { departemen: string };
             created_at: string;
         }>;
@@ -62,6 +64,12 @@ const cleanLabel = (label: string) => {
     if (label.includes("Previous")) return "Sebelumnya";
     if (label.includes("Next")) return "Selanjutnya";
     return label;
+};
+
+const toggleActive = (id: number) => {
+    router.post(route("proses.toggle_active", id), {}, {
+        preserveScroll: true,
+    });
 };
 </script>
 
@@ -116,13 +124,14 @@ const cleanLabel = (label: string) => {
                                 >
                                 <TableHead>Nama Proses</TableHead>
                                 <TableHead>Departemen</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead class="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             <TableRow v-if="proses.data.length === 0">
                                 <TableCell
-                                    colspan="4"
+                                    colspan="5"
                                     class="h-24 text-center text-muted-foreground italic"
                                 >
                                     Data proses tidak ditemukan.
@@ -159,23 +168,57 @@ const cleanLabel = (label: string) => {
                                         }}</span>
                                     </div>
                                 </TableCell>
-                                <TableCell class="text-right">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        class="size-8"
-                                        as-child
+                                <TableCell>
+                                    <Badge
+                                        :class="
+                                            item.is_active
+                                                ? 'bg-green-100 text-green-700 border-green-200'
+                                                : 'bg-slate-100 text-slate-500 border-slate-200'
+                                        "
+                                        variant="outline"
                                     >
-                                        <Link
-                                            :href="
-                                                route('proses.edit', item.id)
+                                        {{ item.is_active ? "Aktif" : "Nonaktif" }}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell class="text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            class="size-8"
+                                            :title="
+                                                item.is_active
+                                                    ? 'Nonaktifkan'
+                                                    : 'Aktifkan'
                                             "
+                                            @click="toggleActive(item.id)"
                                         >
-                                            <IconPencil
-                                                class="size-4 text-muted-foreground hover:text-primary"
+                                            <IconPower
+                                                class="size-4"
+                                                :class="
+                                                    item.is_active
+                                                        ? 'text-green-600'
+                                                        : 'text-slate-400'
+                                                "
                                             />
-                                        </Link>
-                                    </Button>
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            class="size-8"
+                                            as-child
+                                        >
+                                            <Link
+                                                :href="
+                                                    route('proses.edit', item.id)
+                                                "
+                                            >
+                                                <IconPencil
+                                                    class="size-4 text-muted-foreground hover:text-primary"
+                                                />
+                                            </Link>
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         </TableBody>

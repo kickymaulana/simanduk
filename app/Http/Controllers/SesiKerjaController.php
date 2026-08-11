@@ -52,8 +52,9 @@ class SesiKerjaController extends Controller
         $user = auth()->user();
         return Inertia::render('SesiKerjas/Create', [
             'shifts' => Shift::all(['id', 'shift']),
-            // Ambil proses hanya yang sesuai departemen user yang login
+            // Ambil proses hanya yang sesuai departemen user yang login & masih aktif
             'prosesList' => Proses::where('departemen_id', $user->departemen_id)
+            ->where('is_active', true)
             ->orderBy('urutan', 'asc')
             ->get(['id', 'proses']),
             'users' => User::where('id', '!=', auth()->id())->get(['id', 'name'])
@@ -177,6 +178,7 @@ class SesiKerjaController extends Controller
             'sesikerja' => $sesikerja,
             'shifts' => Shift::all(['id', 'shift']),
             'prosesList' => Proses::where('departemen_id', $user->departemen_id)
+            ->where('is_active', true)
             ->orderBy('urutan', 'asc')
             ->get(['id', 'proses']),
             'users' => User::query()

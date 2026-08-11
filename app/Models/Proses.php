@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 
-#[Fillable(['departemen_id', 'urutan', 'proses'])]
+#[Fillable(['departemen_id', 'urutan', 'proses', 'is_active'])]
 #[Table('proses')]
 class Proses extends Model
 {

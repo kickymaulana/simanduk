@@ -91,4 +91,14 @@ class ProsesController extends Controller
 
         return redirect()->route('proses.index')->with('message', 'Data proses berhasil dihapus.');
     }
+
+    public function toggleActive(Proses $proses)
+    {
+        $proses->update([
+            'is_active' => ! $proses->is_active,
+        ]);
+
+        return redirect()->route('proses.index')
+            ->with('message', 'Status proses berhasil diperbarui.');
+    }
 }
