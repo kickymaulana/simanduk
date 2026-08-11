@@ -27,6 +27,7 @@ Produk = **Body** dan **Tangki** closet duduk (produk terpisah). Tiap produk fis
    - `scan/validasi` → OK · `scan/inproses` → cacat toleransi · `scan/buang` → cacat buang (min 1) · `scan/checking` (`/{mode?}`) → QC + kualitas/warna.
    - Setiap scan membuat `pengerjaan_produk` (leader + anggota) dan opsional `pengerjaan_cacat` (PJ dari `aturan_penolakan`).
 4. **Laporan**: dashboard, riwayat-scan-masuk, total-pengerjaan-user, log-temuan-reject, stok, proses-produksi, periksa, data produk.
+5. **QR Belum Discan** (`QrBelumDiscanController`, route `/qr-belum-discan`): daftar produk yang sudah selesai di proses SEBELUM X tapi belum tercatat discan di proses X (kandidat QR lepas/rusak). Kriteria: `produk.proses_id` = proses sebelum X (berdasar `urutan`), `status_akhir != Buang`, tidak punya `pengerjaan_produk` di proses X, `updated_at` dalam rentang filter (default 7 hari). Read-only.
 
 ## Perubahan Besar (penting, sudah berjalan)
 - **Sistem troli DIHAPUS total**: controller (`TroliController`, `Master/MasterTroliController`, `ScanCheckingController`), model (`Troli`, `TroliFisik`) dan tabel (`troli`, `riwayat_ganti_qr`) sudah dihapus. `ProdukController` hanya berisi `dataprodukindex` & `show`.

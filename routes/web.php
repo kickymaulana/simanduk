@@ -13,6 +13,7 @@ use App\Http\Controllers\Master\CacatController;
 use App\Http\Controllers\Master\AturanPenolakanController;
 use App\Http\Controllers\SesiKerjaController;
 use App\Http\Controllers\ScanController;
+use App\Http\Controllers\QrBelumDiscanController;
 use App\Http\Controllers\Master\ProsesController;
 use App\Http\Controllers\Master\ShiftController;
 use App\Http\Controllers\ProdukController;
@@ -148,4 +149,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('periksa', [PeriksaController::class, 'periksa'])->name('periksa');
     Route::post('periksa', [PeriksaController::class, 'periksa_post'])->name('periksa_post');
+
+    Route::get('qr-belum-discan', [QrBelumDiscanController::class, 'index'])->name('qr.belum.discan');
+    Route::get('qr-belum-discan/{proses}', [QrBelumDiscanController::class, 'detail'])->name('qr.belum.discan.show');
 });

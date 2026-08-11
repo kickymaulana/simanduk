@@ -105,6 +105,13 @@ const filteredNavMain = computed(() => {
     });
 
     menus.push({
+        title: "QR Belum Discan",
+        url: route("qr.belum.discan"),
+        icon: IconAlertTriangle,
+        root: "QrBelumDiscan",
+    });
+
+    menus.push({
         title: "Proses Produksi",
         url: route("proses.produksi"),
         icon: IconRoute,
