@@ -48,7 +48,17 @@ watch(
 );
 
 const scan = () => {
-    if (!form.qr || form.processing) return;
+    if (form.processing) return;
+
+    if (!form.nomor_mesin || !form.nomor_mould || !form.asal_slip) {
+        toast.error("Data Belum Lengkap", {
+            description: "Pilih mesin, mould, dan asal slip terlebih dahulu sebelum scan.",
+        });
+        focusScanner();
+        return;
+    }
+
+    if (!form.qr) return;
 
     form.post(route("scan.awal_store"), {
         preserveScroll: true,
@@ -104,6 +114,7 @@ defineOptions({ layout: AuthenticatedLayout });
                                 <option value="">Pilih</option>
                                 <option v-for="m in listMesin" :key="m" :value="m">{{ m }}</option>
                             </select>
+                            <p v-if="form.errors.nomor_mesin" class="text-[10px] text-red-600 font-semibold">{{ form.errors.nomor_mesin }}</p>
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Mould</label>
@@ -111,6 +122,7 @@ defineOptions({ layout: AuthenticatedLayout });
                                 <option value="">Pilih</option>
                                 <option v-for="md in listMould" :key="md" :value="md">{{ md }}</option>
                             </select>
+                            <p v-if="form.errors.nomor_mould" class="text-[10px] text-red-600 font-semibold">{{ form.errors.nomor_mould }}</p>
                         </div>
                     </div>
 
@@ -120,6 +132,7 @@ defineOptions({ layout: AuthenticatedLayout });
                             <option value="">Pilih</option>
                             <option v-for="s in listSlip" :key="s.value" :value="s.value">{{ s.label }}</option>
                         </select>
+                        <p v-if="form.errors.asal_slip" class="text-[10px] text-red-600 font-semibold">{{ form.errors.asal_slip }}</p>
                     </div>
                 </div>
 

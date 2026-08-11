@@ -45,13 +45,16 @@ class ScanController extends Controller
     {
         $validated = $request->validate([
             'qr'          => ['required', 'string', 'size:10', 'regex:/^[A-Z0-9]+$/', 'unique:produk,qrcode'],
-            'nomor_mesin' => 'nullable|string',
-            'nomor_mould' => 'nullable|string',
-            'asal_slip'   => 'nullable|string',
+            'nomor_mesin' => 'required|string',
+            'nomor_mould' => 'required|string',
+            'asal_slip'   => 'required|string',
         ], [
-            'qr.unique' => 'QR Code ini sudah terdaftar.',
-            'qr.size'   => 'QR Code harus tepat 10 karakter.',
-            'qr.regex'  => 'QR Code hanya boleh huruf besar & angka.',
+            'qr.unique'       => 'QR Code ini sudah terdaftar.',
+            'qr.size'         => 'QR Code harus tepat 10 karakter.',
+            'qr.regex'        => 'QR Code hanya boleh huruf besar & angka.',
+            'nomor_mesin.required' => 'Pilih nomor mesin!',
+            'nomor_mould.required' => 'Pilih nomor mould!',
+            'asal_slip.required'   => 'Pilih asal slip!',
         ]);
 
         $sesi = $this->sesiAktif();
