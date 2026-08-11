@@ -9,14 +9,12 @@ import { useForm, Link } from '@inertiajs/vue3'
 const props = defineProps<{
     class?: string
     departemens: Array<{ id: number, nama: string }>
-    roles: Array<{ id: number, name: string }>
 }>()
 
 const form = useForm({
     name: '',
     username: '',
     departemen_id: '',
-    role: '',
     password: '',
     password_confirmation: '',
 })
@@ -87,24 +85,6 @@ const submit = () => {
                                 </option>
                             </select>
                             <p v-if="form.errors.departemen_id" class="text-destructive text-xs mt-1 italic">{{ form.errors.departemen_id }}</p>
-                        </Field>
-
-                        <Field>
-                            <FieldLabel for="role" class="font-semibold text-primary dark:text-primary-foreground/90">
-                                Role / Jabatan
-                            </FieldLabel>
-                            <select
-                                id="role"
-                                v-model="form.role"
-                                class="flex h-11 w-full rounded-md border border-border bg-white/70 dark:bg-black/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                required
-                            >
-                                <option value="" disabled class="dark:bg-slate-900">Pilih Role</option>
-                                <option v-for="role in roles" :key="role.id" :value="role.name" class="dark:bg-slate-900">
-                                    {{ role.name }}
-                                </option>
-                            </select>
-                            <p v-if="form.errors.role" class="text-destructive text-xs mt-1 italic">{{ form.errors.role }}</p>
                         </Field>
 
                         <Field>

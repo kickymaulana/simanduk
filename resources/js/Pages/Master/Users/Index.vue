@@ -40,6 +40,7 @@ const props = defineProps<{
                 id: number;
                 name: string;
             }>;
+            status?: string;
             created_at: string;
         }>;
         links: Array<{
@@ -115,6 +116,13 @@ const cleanLabel = (label: string) => {
                         </button>
                     </div>
 
+                    <Button as-child variant="outline" class="text-amber-600 border-amber-200 hover:bg-amber-50">
+                        <Link :href="route('users.pending')">
+                            <IconUserPlus class="mr-2 size-4" />
+                            <span class="hidden sm:inline">Persetujuan</span>
+                        </Link>
+                    </Button>
+
                     <Button as-child class="bg-primary hover:bg-primary/90">
                         <Link :href="route('users.create')">
                             <IconUserPlus class="mr-2 size-4" />
@@ -133,13 +141,14 @@ const cleanLabel = (label: string) => {
                                 <TableHead>Username</TableHead>
                                 <TableHead>Departemen</TableHead>
                                 <TableHead>Jabatan/Role</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead class="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             <TableRow v-if="users.data.length === 0">
                                 <TableCell
-                                    colspan="5"
+                                    colspan="6"
                                     class="h-24 text-center text-muted-foreground"
                                 >
                                     Data tidak ditemukan.
@@ -187,6 +196,30 @@ const cleanLabel = (label: string) => {
                                             No Role
                                         </span>
                                     </div>
+                                </TableCell>
+
+                                <TableCell>
+                                    <Badge
+                                        v-if="user.status === 'antri'"
+                                        class="bg-amber-100 text-amber-700 border border-amber-200"
+                                        variant="outline"
+                                    >
+                                        Antri
+                                    </Badge>
+                                    <Badge
+                                        v-else-if="user.status === 'ditolak'"
+                                        class="bg-red-100 text-red-700 border border-red-200"
+                                        variant="outline"
+                                    >
+                                        Ditolak
+                                    </Badge>
+                                    <Badge
+                                        v-else
+                                        class="bg-green-100 text-green-700 border border-green-200"
+                                        variant="outline"
+                                    >
+                                        Aktif
+                                    </Badge>
                                 </TableCell>
 
                                 <TableCell class="text-right">

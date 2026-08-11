@@ -41,6 +41,9 @@ Route::post('logout', [LoginController::class, 'destroy'])->name('logout')->midd
 
 Route::middleware('auth', 'role:admin')->group(function () {
     Route::get('master/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('master/users/pending', [UserController::class, 'pending'])->name('users.pending');
+    Route::post('master/users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
+    Route::post('master/users/{user}/reject', [UserController::class, 'reject'])->name('users.reject');
     Route::get('master/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('master/users/create', [UserController::class, 'store'])->name('users.store');
     Route::get('master/users/{user}', [UserController::class, 'show'])->name('users.show');

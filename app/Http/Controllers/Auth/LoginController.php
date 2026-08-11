@@ -25,6 +25,15 @@ class LoginController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->remember)) {
+            // Cek status: hanya user aktif yang boleh masuk
+            if (auth()->user()->status !== 'aktif') {
+                Auth::logout();
+
+                return back()->withErrors([
+                    'username' => 'Akun belum disetujui admin. Silakan tunggu persetujuan.',
+                ]);
+            }
+
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'));

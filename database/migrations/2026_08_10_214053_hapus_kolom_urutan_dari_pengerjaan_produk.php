@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pengerjaan_produk', function (Blueprint $table) {
-            $table->dropColumn('urutan');
-        });
+        // Hanya drop jika kolom benar-benar ada (di fresh install kolom ini tak pernah dibuat)
+        if (Schema::hasColumn('pengerjaan_produk', 'urutan')) {
+            Schema::table('pengerjaan_produk', function (Blueprint $table) {
+                $table->dropColumn('urutan');
+            });
+        }
     }
 
     /**

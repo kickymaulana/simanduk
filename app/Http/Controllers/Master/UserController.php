@@ -10,14 +10,58 @@ use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use App\Models\Departemen;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
 
+    /** Daftar user yang masih menunggu persetujuan (status antri). */
+    public function pending(Request $request)
+    {
+        $users = User::query()
+            ->with(['roles:id,name', 'departemen:id,departemen'])
+            ->where('status', 'antri')
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('Master/Users/Pending', [
+            'users' => $users,
+            'roles' => Role::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    /** Setujui user: aktifkan + beri role. */
+    public function approve(Request $request, User $user)
+    {
+        $request->validate([
+            'role' => 'required|exists:roles,id',
+        ]);
+
+        $role = Role::findOrFail($request->role);
+
+        $user->syncRoles([$role->id]);
+        $user->update(['status' => 'aktif']);
+
+        return redirect()->route('users.pending')->with('success', "User {$user->name} disetujui.");
+    }
+
+    /** Tolak user antri. */
+    public function reject(User $user)
+    {
+        if ($user->status !== 'antri') {
+            return back()->with('error', 'User tidak berstatus antri.');
+        }
+
+        $user->update(['status' => 'ditolak']);
+
+        return redirect()->route('users.pending')->with('success', "User {$user->name} ditolak.");
+    }
+
     public function index(Request $request)
     {
         $users = User::query()
-        ->select('id', 'name', 'username', 'email', 'departemen_id', 'created_at')
+        ->select('id', 'name', 'username', 'email', 'departemen_id', 'status', 'created_at')
         ->with([
             'roles:id,name',
             'departemen:id,departemen'

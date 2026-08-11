@@ -19,6 +19,7 @@ import {
     IconPalette,
     IconSearch,
     IconScan,
+    IconUserCheck,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -134,6 +135,12 @@ const masterData = [
         name: "Pengguna",
         url: route("users.index"),
         icon: IconUsers,
+        root: "Master/Users",
+    },
+    {
+        name: "Persetujuan User",
+        url: route("users.pending"),
+        icon: IconUserCheck,
         root: "Master/Users",
     },
     {

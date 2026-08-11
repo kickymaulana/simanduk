@@ -20,14 +20,16 @@ Panduan struktur aplikasi untuk AI agent (opencode) agar memahami proyek ini tan
 Produk = **Body** dan **Tangki** closet duduk (produk terpisah). Tiap produk fisik punya **QR 10 char** (mis. `DN0002343`) sebagai identitas; QR sudah dicetak sebelum produk dicetak. `produk.id` (integer) = identitas stabil; `produk.qrcode` = kolom unik yang bisa diganti.
 
 ## Alur Kerja
-1. **Auth** username+password → dashboard.
-2. **Sesi Kerja** (`SesiKerjaController`): leader buat sesi (shift, proses sesuai departemen, jenis Body/Tangki, anggota tim), lalu **aktifkan** → session `sesi_kerja_id`. Semua scan wajib sesi aktif.
+1. **Auth** username+password → dashboard. User baru lewat registrasi berstatus **`antri`** (belum bisa login) → admin setujui di menu Master → **Persetujuan User** (`Master/UserController@pending/approve/reject`, tambah kolom `users.status` = antri/aktif/ditolak). Role ditentukan admin saat approval.
+2. **Sesi Kerja** (`SesiKerjaController`): leader buat sesi (shift, proses sesuai departemen, jenis Body/Tangki, anggota tim), lalu **aktifkan** → session `sesi_kerja_id`. Semua scan wajib sesi aktif. Bisa langsung aktifkan sesi lama yang masih sesuai (tanpa buat baru).
 3. **Scan Produk** (`ScanController`, route `/scan/*`) — bebas troli, proses dari sesi aktif:
    - `scan/awal` → daftar produk baru (casting), produk dibuat dgn `proses_id` sesi + catat leader & semua anggota.
    - `scan/validasi` → OK · `scan/inproses` → cacat toleransi · `scan/buang` → cacat buang (min 1) · `scan/checking` (`/{mode?}`) → QC + kualitas/warna.
    - Setiap scan membuat `pengerjaan_produk` (leader + anggota) dan opsional `pengerjaan_cacat` (PJ dari `aturan_penolakan`).
+   - ⚠️ **Produk `status_akhir='Buang'` bersifat final — ditolak di semua scan** (di `prosesScan`).
+   - Setiap render halaman scan mengirim `scan_counter` (jumlah pengerjaan user di sesi aktif). Sukses scan mengirim flash `scan_qr`+`scan_mode` → ditampilkan komponen **`ScanSuccessOverlay.vue`** (overlay besar fullscreen + counter per sesi) di `AuthenticatedLayout`.
 4. **Laporan**: dashboard, riwayat-scan-masuk, total-pengerjaan-user, log-temuan-reject, stok, proses-produksi, periksa, data produk.
-5. **QR Belum Discan** (`QrBelumDiscanController`, route `/qr-belum-discan`): daftar produk yang sudah selesai di proses SEBELUM X tapi belum tercatat discan di proses X (kandidat QR lepas/rusak). Kriteria: `produk.proses_id` = proses sebelum X (berdasar `urutan`), `status_akhir != Buang`, tidak punya `pengerjaan_produk` di proses X, `updated_at` dalam rentang filter (default 7 hari). Read-only.
+5. **QR Belum Discan** (`QrBelumDiscanController`, route `/qr-belum-discan`): daftar produk yang sudah selesai di proses SEBELUM X tapi belum tercatat discan di proses X (kandidat QR lepas/rusak). Kriteria: `produk.proses_id` = proses sebelum X (berdasar `urutan`), `status_akhir != Buang`, tidak punya `pengerjaan_produk` di proses X, `updated_at` dalam rentang filter (default 7 hari, dihitung `startOfDay`/`endOfDay`). Read-only.
 
 ## Perubahan Besar (penting, sudah berjalan)
 - **Sistem troli DIHAPUS total**: controller (`TroliController`, `Master/MasterTroliController`, `ScanCheckingController`), model (`Troli`, `TroliFisik`) dan tabel (`troli`, `riwayat_ganti_qr`) sudah dihapus. `ProdukController` hanya berisi `dataprodukindex` & `show`.
@@ -35,7 +37,7 @@ Produk = **Body** dan **Tangki** closet duduk (produk terpisah). Tiap produk fis
 - **Fitur Ganti QR** (QR rusak/hilang): DITUNDA, belum implementasi. Ide: cari produk kandidat via tanggal+proses, ganti `qrcode`, log. Tabel log `riwayat_ganti_qr` akan dibuat ulang saat fitur dibuat.
 
 ## Struktur DB (tabel aktif ±26)
-- Master: `users`, `departemen`, `proses` (departemen_id, urutan), `shift`, `cacat`, `aturan_penolakan` (cacat_id, proses_pemeriksa + proses_toleransi/proses_buang), `kualitas`, `warna`.
+- Master: `users` (kolom `status` = antri/aktif/ditolak), `departemen`, `proses` (departemen_id, urutan), `shift`, `cacat`, `aturan_penolakan` (cacat_id, proses_pemeriksa + proses_toleransi/proses_buang), `kualitas`, `warna`.
 - Sesi: `sesi_kerja` (leader_id, shift_id, proses_id, jenis), `sesi_kerja_member`.
 - Produk: `produk` (qrcode unik, jenis, status_akhir, sudah_scan, proses_id, kualitas_id, warna_id, nomor_mesin, nomor_mould, asal_slip).
 - Riwayat: `pengerjaan_produk` (produk_id, sesi_kerja_id, user_id, proses_id, status_kondisi) = sumber counter; `pengerjaan_cacat` (pengerjaan_produk_id, cacat_id, user_scan_id, proses_scan_id, user_pj_id, proses_pj_id).

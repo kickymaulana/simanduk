@@ -9,7 +9,6 @@ import bgImage from "../../images/bg-login.png";
 
 defineProps<{
   departemens: Array<{ id: number, departemen: string }>,
-  roles: Array<{ id: number, name: string }>
 }>()
 
 const isDark = useDark()
@@ -36,7 +35,6 @@ const toggleDark = useToggle(isDark)
     <div class="relative z-10 w-full max-w-2xl">
       <RegisterForm
         :departemens="departemens"
-        :roles="roles"
         class="shadow-2xl border-none"
       />
     </div>

@@ -16,27 +16,18 @@ class RegisterController extends Controller
 
     public function index()
     {
-        // Tentukan role yang diizinkan untuk registrasi publik
-        $allowedRoles = ['Manager', 'Supervisor', 'Leader', 'Operator'];
-
         return Inertia::render('Auth/Register', [
             'departemens' => Departemen::all(),
-            // Hanya ambil role yang ada di dalam list allowedRoles
-            'roles' => Role::whereIn('name', $allowedRoles)->get()
         ]);
     }
 
     public function store(Request $request)
     {
-        $allowedRoles = ['Manager', 'Supervisor', 'Leader', 'Operator'];
-
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
-            // Validasi email kita hapus dari $request karena tidak dikirim dari form
             'password' => 'required|string|min:8|confirmed',
             'departemen_id' => 'required|exists:departemen,id',
-            'role' => ['required', \Illuminate\Validation\Rule::in($allowedRoles)],
         ]);
 
         // Generate email otomatis berdasarkan username
@@ -45,15 +36,15 @@ class RegisterController extends Controller
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
-            'email' => $autoEmail, // Pakai email yang di-generate otomatis
+            'email' => $autoEmail,
             'password' => Hash::make($request->password),
             'departemen_id' => $request->departemen_id,
+            'status' => 'antri',
         ]);
 
-        $user->assignRole($request->role);
+        // Tidak auto-login; menunggu persetujuan admin (role ditentukan admin saat approval)
 
-        Auth::login($user);
-
-        return redirect()->route('dashboard');
+        return redirect()->route('login')
+            ->with('success', 'Pendaftaran berhasil! Akun kamu menunggu persetujuan admin. Silakan login setelah disetujui.');
     }
 }

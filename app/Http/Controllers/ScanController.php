@@ -23,6 +23,28 @@ class ScanController extends Controller
         return $id ? SesiKerja::with(['sesi_kerja_members', 'proses'])->find($id) : null;
     }
 
+    /** Counter pekerjaan user ini pada sesi aktif = berapa scan yg sudah dilakukan. */
+    private function counterSesi(?SesiKerja $sesi): int
+    {
+        if (! $sesi) {
+            return 0;
+        }
+
+        return PengerjaanProduk::where('sesi_kerja_id', $sesi->id)
+            ->where('user_id', auth()->id())
+            ->count();
+    }
+
+    private function renderScan(string $page, array $extra = []): \Symfony\Component\HttpFoundation\Response
+    {
+        $sesi = $this->sesiAktif();
+
+        return Inertia::render($page, array_merge([
+            'sesi'         => $sesi,
+            'scan_counter' => $this->counterSesi($sesi),
+        ], $extra));
+    }
+
     public function index()
     {
         return Inertia::render('Scan/Index', [
@@ -34,11 +56,7 @@ class ScanController extends Controller
 
     public function awal()
     {
-        $sesi = $this->sesiAktif();
-
-        return Inertia::render('Scan/Awal', [
-            'sesi' => $sesi,
-        ]);
+        return $this->renderScan('Scan/Awal');
     }
 
     public function awal_store(Request $request)
@@ -82,7 +100,9 @@ class ScanController extends Controller
                 $this->catatPengerjaan($produk, $sesi, 'OK');
             });
 
-            return back()->with('success', "Produk {$qr} berhasil dicatat.");
+            return back()->with('success', "Produk {$qr} berhasil dicatat.")
+                ->with('scan_qr', $qr)
+                ->with('scan_mode', 'Scan Awal');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Gagal: ' . $e->getMessage()]);
         }
@@ -92,9 +112,7 @@ class ScanController extends Controller
 
     public function validasi()
     {
-        return Inertia::render('Scan/Validasi', [
-            'sesi' => $this->sesiAktif(),
-        ]);
+        return $this->renderScan('Scan/Validasi');
     }
 
     public function validasi_store(Request $request)
@@ -108,8 +126,7 @@ class ScanController extends Controller
 
     public function inproses()
     {
-        return Inertia::render('Scan/Inproses', [
-            'sesi'          => $this->sesiAktif(),
+        return $this->renderScan('Scan/Inproses', [
             'pilihan_cacat' => $this->pilihanCacat(),
         ]);
     }
@@ -130,8 +147,7 @@ class ScanController extends Controller
 
     public function buang()
     {
-        return Inertia::render('Scan/Buang', [
-            'sesi'          => $this->sesiAktif(),
+        return $this->renderScan('Scan/Buang', [
             'pilihan_cacat' => $this->pilihanCacat(),
         ]);
     }
@@ -160,8 +176,7 @@ class ScanController extends Controller
             default    => 'Scan/Checking',
         };
 
-        return Inertia::render($page, [
-            'sesi'             => $this->sesiAktif(),
+        return $this->renderScan($page, [
             'pilihan_cacat'    => in_array($mode, ['inproses', 'buang']) ? $this->pilihanCacat() : collect(),
             'pilihan_kualitas' => Kualitas::all(['id', 'kualitas']),
             'pilihan_warna'    => Warna::all(['id', 'warna']),
@@ -235,7 +250,7 @@ class ScanController extends Controller
      * Inti semua scan produk: cari produk by QR (global), catat pengerjaan,
      * update produk. Proses diambil dari sesi aktif (bukan troli).
      */
-    private function prosesScan(Request $request, string $statusKondisi, callable $updateProduk, array $cacatIds = [], bool $pakaiProsesBuang = false)
+    private function prosesScan(Request $request, string $statusKondisi, callable $updateProduk, array $cacatIds = [], bool $pakaiProsesBuang = false, ?string $modeLabel = null)
     {
         $sesi = $this->sesiAktif();
 
@@ -247,6 +262,11 @@ class ScanController extends Controller
 
         if (! $produk) {
             return back()->withErrors(['qr' => "Produk {$request->qr} tidak ditemukan di sistem!"]);
+        }
+
+        // Produk yang sudah BUANG bersifat final — tidak boleh diproses lagi
+        if ($produk->status_akhir === 'Buang') {
+            return back()->withErrors(['qr' => "Produk {$request->qr} sudah berstatus BUANG dan tidak bisa diproses lagi!"]);
         }
 
         if ($produk->proses_id === $sesi->proses_id && $produk->sudah_scan === 'Sudah') {
@@ -264,7 +284,9 @@ class ScanController extends Controller
                 $updateProduk($produk, $sesi);
             });
 
-            return back()->with('success', "Produk {$request->qr} berhasil diproses.");
+            return back()->with('success', "Produk {$request->qr} berhasil diproses.")
+                ->with('scan_qr', $request->qr)
+                ->with('scan_mode', $modeLabel ?? $statusKondisi);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Gagal menyimpan data: ' . $e->getMessage()]);
         }

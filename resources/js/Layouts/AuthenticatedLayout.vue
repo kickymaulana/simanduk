@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppSidebar from "@/components/AppSidebar.vue"
 import SiteHeader from "@/components/SiteHeader.vue"
+import ScanSuccessOverlay from "@/components/ScanSuccessOverlay.vue"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { toast } from 'vue-sonner'
 import { Toaster } from '@/components/ui/sonner'
@@ -48,6 +49,8 @@ watch(
         <slot />
         <Toaster position="top-right"/>
       </main>
+
+      <ScanSuccessOverlay />
 
     </SidebarInset>
   </SidebarProvider>
