@@ -30,8 +30,15 @@ watch(() => form.cacat_ids, (newVal) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
 }, { deep: true });
 
-const focusInput = () => {
-    setTimeout(() => nativeInput.value?.focus(), 50);
+const focusInput = (attempt = 0) => {
+    if (nativeInput.value) {
+        nativeInput.value.focus();
+        if (document.activeElement !== nativeInput.value && attempt < 5) {
+            setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+        }
+    } else if (attempt < 5) {
+        setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+    }
 };
 
 onMounted(() => focusInput());
@@ -50,6 +57,7 @@ const handleScan = () => {
         onSuccess: () => {
             toast.success(`Produk ${form.qr} Berhasil`);
             form.qr = "";
+            focusInput();
         },
         onError: (err) => {
             toast.error(err.qr || err.error || "Gagal");

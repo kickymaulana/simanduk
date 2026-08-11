@@ -35,10 +35,15 @@ watch(
     { deep: true }
 );
 
-const focusInput = () => {
-    setTimeout(() => {
-        if (nativeInput.value) nativeInput.value.focus();
-    }, 50);
+const focusInput = (attempt = 0) => {
+    if (nativeInput.value) {
+        nativeInput.value.focus();
+        if (document.activeElement !== nativeInput.value && attempt < 5) {
+            setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+        }
+    } else if (attempt < 5) {
+        setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+    }
 };
 
 watch(
@@ -73,6 +78,7 @@ const handleScan = () => {
                 duration: 2000,
             });
             form.qr = "";
+            focusInput();
         },
         onError: (errors) => {
             toast.error("Gagal", {

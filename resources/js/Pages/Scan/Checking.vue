@@ -23,8 +23,15 @@ const form = useForm({
     warna_id: null as number | null,
 });
 
-const focusInput = () => {
-    setTimeout(() => nativeInput.value?.focus(), 50);
+const focusInput = (attempt = 0) => {
+    if (nativeInput.value) {
+        nativeInput.value.focus();
+        if (document.activeElement !== nativeInput.value && attempt < 5) {
+            setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+        }
+    } else if (attempt < 5) {
+        setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+    }
 };
 
 onMounted(() => focusInput());
@@ -38,6 +45,7 @@ const handleScan = () => {
         onSuccess: () => {
             toast.success("Terverifikasi!", { description: `Produk ${form.qr} berhasil.` });
             form.qr = "";
+            focusInput();
         },
         onError: (errors) => {
             toast.error(errors.qr || errors.error || "Gagal");

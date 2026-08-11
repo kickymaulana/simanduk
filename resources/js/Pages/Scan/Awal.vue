@@ -27,7 +27,16 @@ const listSlip = [
     { label: "SS2 (Standard Slip 2)", value: "SS2" },
 ];
 
-const focusScanner = () => qrInput.value?.focus();
+const focusScanner = (attempt = 0) => {
+    if (qrInput.value) {
+        qrInput.value.focus();
+        if (document.activeElement !== qrInput.value && attempt < 5) {
+            setTimeout(() => focusScanner(attempt + 1), 80 * (attempt + 1));
+        }
+    } else if (attempt < 5) {
+        setTimeout(() => focusScanner(attempt + 1), 80 * (attempt + 1));
+    }
+};
 
 onMounted(focusScanner);
 
@@ -46,6 +55,7 @@ const scan = () => {
         onSuccess: () => {
             toast.success("Berhasil!", { description: `Produk ${form.qr} dicatat.` });
             form.reset("qr");
+            focusScanner();
         },
         onError: (errors) => {
             toast.error("Gagal Scan", {

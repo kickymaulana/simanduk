@@ -22,13 +22,19 @@ const nativeInput = ref<HTMLInputElement | null>(null);
 
 const form = useForm({ qr: "" });
 
-const focusInput = () => {
-    setTimeout(() => {
-        if (nativeInput.value) nativeInput.value.focus();
-    }, 50);
+const focusInput = (attempt = 0) => {
+    if (nativeInput.value) {
+        nativeInput.value.focus();
+        // Pastikan benar-benar fokus; jika belum, coba lagi sebentar lagi.
+        if (document.activeElement !== nativeInput.value && attempt < 5) {
+            setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+        }
+    } else if (attempt < 5) {
+        setTimeout(() => focusInput(attempt + 1), 80 * (attempt + 1));
+    }
 };
 
-onMounted(focusInput);
+onMounted(() => focusInput());
 
 watch(
     () => form.processing,
@@ -48,6 +54,7 @@ const handleScan = () => {
                 duration: 2000,
             });
             form.reset();
+            focusInput();
         },
         onError: (errors) => {
             toast.error("Gagal Validasi", {
