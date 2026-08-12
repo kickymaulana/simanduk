@@ -50,6 +50,8 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'scan_qr' => $request->session()->get('scan_qr'),
+                'scan_mode' => $request->session()->get('scan_mode'),
             ],
         ];
     }

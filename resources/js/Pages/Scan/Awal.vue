@@ -63,14 +63,11 @@ const scan = () => {
     form.post(route("scan.awal_store"), {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success("Berhasil!", { description: `Produk ${form.qr} dicatat.` });
             form.reset("qr");
             focusScanner();
         },
         onError: (errors) => {
-            toast.error("Gagal Scan", {
-                description: errors.qr || errors.error || "Gagal menyimpan data.",
-            });
+            // Overlay tengah (ScanSuccessOverlay) menampilkan error dari props.errors
             form.reset("qr");
         },
     });

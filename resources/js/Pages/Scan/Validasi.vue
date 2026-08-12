@@ -49,17 +49,11 @@ const handleScan = () => {
     form.post(route("scan.validasi_store"), {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success("Terverifikasi!", {
-                description: `Produk ${form.qr} berhasil divalidasi.`,
-                duration: 2000,
-            });
             form.reset();
             focusInput();
         },
         onError: (errors) => {
-            toast.error("Gagal Validasi", {
-                description: errors.qr || errors.error || "Terjadi kesalahan validasi.",
-            });
+            // Overlay tengah (ScanSuccessOverlay) menampilkan error
             form.reset("qr");
             focusInput();
         },

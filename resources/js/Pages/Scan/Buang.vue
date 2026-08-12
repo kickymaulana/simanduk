@@ -73,17 +73,11 @@ const handleScan = () => {
     form.post(route("scan.buang_store"), {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success("BERHASIL DIBUANG!", {
-                description: `Produk ${form.qr} dicatat sebagai Buang.`,
-                duration: 2000,
-            });
             form.qr = "";
             focusInput();
         },
         onError: (errors) => {
-            toast.error("Gagal", {
-                description: errors.qr || errors.error || "Terjadi kesalahan.",
-            });
+            // Overlay tengah (ScanSuccessOverlay) menampilkan error
             form.reset("qr");
             focusInput();
         },

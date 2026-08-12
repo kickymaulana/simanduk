@@ -17,6 +17,11 @@ console.log(flashSuccess.value)
 watch(
   () => page.props.flash,
   (flash: any) => {
+    // Jika ini scan (flash.scan_qr ada), overlay tengah sudah menampilkan → skip toast kanan
+    if (flash?.scan_qr) {
+      return;
+    }
+
     if (flash?.success) {
       toast.success('Berhasil!', {
         description: flash.success,
