@@ -35,7 +35,7 @@ class ScanController extends Controller
             ->count();
     }
 
-    private function renderScan(string $page, array $extra = []): \Symfony\Component\HttpFoundation\Response
+    private function renderScan(string $page, array $extra = []): \Inertia\Response
     {
         $sesi = $this->sesiAktif();
 
