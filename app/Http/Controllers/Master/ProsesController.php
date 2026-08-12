@@ -85,13 +85,6 @@ class ProsesController extends Controller
         return redirect()->route('proses.index')->with('message', 'Data proses berhasil diperbarui.');
     }
 
-    public function destroy(Proses $proses)
-    {
-        $proses->delete();
-
-        return redirect()->route('proses.index')->with('message', 'Data proses berhasil dihapus.');
-    }
-
     public function toggleActive(Proses $proses)
     {
         $proses->update([

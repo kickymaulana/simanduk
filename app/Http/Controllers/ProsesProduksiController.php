@@ -12,6 +12,7 @@ class ProsesProduksiController extends Controller
     {
         // Mengambil semua data tanpa pagination, diurutkan berdasarkan kolom 'urutan'
         $proses = Proses::query()
+            ->where('is_active', true)
             ->with('departemen:id,departemen')
             ->orderBy('urutan', 'asc')
             ->get();

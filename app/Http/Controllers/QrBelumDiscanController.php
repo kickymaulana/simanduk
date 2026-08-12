@@ -28,7 +28,10 @@ class QrBelumDiscanController extends Controller
 
     private function prosesSebelumnya(?Proses $x): ?Proses
     {
-        return $x ? Proses::where('urutan', '<', $x->urutan)->orderByDesc('urutan')->first() : null;
+        return $x ? Proses::where('urutan', '<', $x->urutan)
+            ->where('is_active', true)
+            ->orderByDesc('urutan')
+            ->first() : null;
     }
 
     private function queryKandidat(Proses $x, Request $request)
@@ -46,6 +49,7 @@ class QrBelumDiscanController extends Controller
     public function index(Request $request)
     {
         $proses = Proses::with('departemen:id,departemen')
+            ->where('is_active', true)
             ->orderBy('urutan')
             ->get()
             ->map(function (Proses $x) use ($request) {
@@ -53,6 +57,7 @@ class QrBelumDiscanController extends Controller
                     'id'                  => $x->id,
                     'proses'              => $x->proses,
                     'urutan'              => $x->urutan,
+                    'is_active'           => (bool) $x->is_active,
                     'departemen'          => $x->departemen->departemen ?? '-',
                     'jumlah_belum_discan' => $this->queryKandidat($x, $request)->count(),
                 ];

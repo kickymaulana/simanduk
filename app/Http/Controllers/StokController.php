@@ -21,7 +21,7 @@ class StokController extends Controller
             ->groupBy('proses_id')
             ->pluck('total', 'proses_id');
 
-        $semuaProses = Proses::orderBy('urutan', 'asc')->get();
+        $semuaProses = Proses::where('is_active', true)->orderBy('urutan', 'asc')->get();
         $semuaDepartemen = Departemen::orderBy('id', 'asc')->get();
 
         $stok = $semuaDepartemen->map(function (Departemen $d) use ($semuaProses, $produkPerProses) {
@@ -42,7 +42,7 @@ class StokController extends Controller
                 'total_produk' => $prosesList->sum('total_produk'),
                 'proses'       => $prosesList,
             ];
-        });
+        })->filter(fn ($d) => $d['proses']->isNotEmpty())->values();
 
         return Inertia::render('Stok/Index', [
             'stok' => $stok,

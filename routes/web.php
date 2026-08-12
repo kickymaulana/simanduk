@@ -77,7 +77,6 @@ Route::middleware('auth', 'role:admin')->group(function () {
     Route::post('master/proses/create', [ProsesController::class, 'store'])->name('proses.store');
     Route::get('master/proses/{proses}/edit', [ProsesController::class, 'edit'])->name('proses.edit');
     Route::put('master/proses/{proses}/edit', [ProsesController::class, 'update'])->name('proses.update');
-    Route::delete('master/proses/{proses}', [ProsesController::class, 'destroy'])->name('proses.destroy');
     Route::post('master/proses/{proses}/toggle-active', [ProsesController::class, 'toggleActive'])->name('proses.toggle_active');
 
     Route::get('master/cacats', [CacatController::class, 'index'])->name('cacats.index');

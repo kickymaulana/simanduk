@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, useForm, router } from "@inertiajs/vue3";
+import { Head, Link, useForm } from "@inertiajs/vue3";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,28 +15,9 @@ import {
     IconArrowLeft,
     IconDeviceFloppy,
     IconLoader2,
-    IconDotsVertical,
-    IconTrash,
     IconBuildingCommunity,
     IconListNumbers,
 } from "@tabler/icons-vue";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 defineOptions({ layout: AuthenticatedLayout });
 
@@ -91,58 +72,6 @@ const submit = () => {
                     <CardTitle class="text-primary text-lg"
                         >Update Data Proses</CardTitle
                     >
-
-                    <AlertDialog>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger as-child>
-                                <Button variant="ghost" size="icon">
-                                    <IconDotsVertical class="size-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" class="w-40">
-                                <AlertDialogTrigger as-child>
-                                    <DropdownMenuItem
-                                        class="text-destructive focus:text-destructive cursor-pointer"
-                                    >
-                                        <IconTrash class="mr-2 size-4" />
-                                        Hapus Proses
-                                    </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle
-                                    >Hapus Alur Proses?</AlertDialogTitle
-                                >
-                                <AlertDialogDescription>
-                                    Apakah Anda yakin ingin menghapus proses
-                                    <strong class="text-foreground">{{
-                                        props.proses.proses
-                                    }}</strong
-                                    >? Data yang dihapus tidak dapat
-                                    dikembalikan.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction
-                                    @click="
-                                        router.delete(
-                                            route(
-                                                'proses.destroy',
-                                                props.proses.id,
-                                            ),
-                                        )
-                                    "
-                                    class="bg-destructive text-white hover:bg-destructive/90"
-                                >
-                                    Ya, Hapus
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
                 </CardHeader>
 
                 <CardContent class="pt-6">
