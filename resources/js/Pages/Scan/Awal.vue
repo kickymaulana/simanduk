@@ -110,7 +110,7 @@ defineOptions({ layout: AuthenticatedLayout });
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Mesin</label>
-                            <select v-model="form.nomor_mesin" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
+                            <select v-model="form.nomor_mesin" @change="focusScanner" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
                                 <option value="">Pilih</option>
                                 <option v-for="m in listMesin" :key="m" :value="m">{{ m }}</option>
                             </select>
@@ -118,7 +118,7 @@ defineOptions({ layout: AuthenticatedLayout });
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Mould</label>
-                            <select v-model="form.nomor_mould" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
+                            <select v-model="form.nomor_mould" @change="focusScanner" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
                                 <option value="">Pilih</option>
                                 <option v-for="md in listMould" :key="md" :value="md">{{ md }}</option>
                             </select>
@@ -128,7 +128,7 @@ defineOptions({ layout: AuthenticatedLayout });
 
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-slate-500 uppercase">Asal Slip</label>
-                        <select v-model="form.asal_slip" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
+                        <select v-model="form.asal_slip" @change="focusScanner" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
                             <option value="">Pilih</option>
                             <option v-for="s in listSlip" :key="s.value" :value="s.value">{{ s.label }}</option>
                         </select>
