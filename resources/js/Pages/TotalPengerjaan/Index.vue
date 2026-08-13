@@ -14,6 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Popover,
     PopoverContent,
     PopoverTrigger,
@@ -45,10 +52,12 @@ const props = defineProps<{
         to: number;
         total: number;
     };
+    departemens: Array<{ id: number; departemen: string }>;
     filters: {
         search?: string;
         date_start?: string; // Format: "YYYY-MM-DD HH:mm:ss"
         date_end?: string; // Format: "YYYY-MM-DD HH:mm:ss"
+        departemen_id?: string;
     };
 }>();
 
@@ -72,6 +81,7 @@ const initialEnd = splitDateTime(props.filters.date_end, "23:59");
 
 // State
 const search = ref(props.filters.search || "");
+const departemenId = ref(props.filters.departemen_id || "");
 const dateStart = ref(initialStart.date);
 const timeStart = ref(initialStart.time);
 const dateEnd = ref(initialEnd.date);
@@ -92,6 +102,10 @@ const updateFilters = () => {
         route("total.pengerjaan.user"),
         {
             search: search.value,
+            departemen_id:
+                departemenId.value && departemenId.value !== "all"
+                    ? departemenId.value
+                    : undefined,
             date_start: fullDateStart,
             date_end: fullDateEnd,
         },
@@ -113,12 +127,17 @@ watch([dateStart, timeStart, dateEnd, timeEnd], () => {
     updateFilters();
 });
 
+watch(departemenId, () => {
+    updateFilters();
+});
+
 const clearSearch = () => {
     search.value = "";
 };
 
 const resetFilters = () => {
     search.value = "";
+    departemenId.value = "";
     dateStart.value = undefined;
     timeStart.value = "00:00";
     dateEnd.value = undefined;
@@ -278,8 +297,26 @@ const cleanLabel = (label: string) => {
                             </button>
                         </div>
 
+                        <Select v-model="departemenId">
+                            <SelectTrigger class="w-full md:w-48 h-10">
+                                <SelectValue placeholder="Pilih Departemen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all"
+                                    >Semua Departemen</SelectItem
+                                >
+                                <SelectItem
+                                    v-for="d in departemens"
+                                    :key="d.id"
+                                    :value="d.id"
+                                >
+                                    {{ d.departemen }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+
                         <Button
-                            v-if="search || dateStart || dateEnd"
+                            v-if="search || departemenId || dateStart || dateEnd"
                             variant="ghost"
                             size="icon"
                             @click="resetFilters"
@@ -303,6 +340,10 @@ const cleanLabel = (label: string) => {
                                 <TableHead
                                     class="text-xs uppercase font-bold tracking-wider"
                                     >Nama Personel</TableHead
+                                >
+                                <TableHead
+                                    class="text-xs uppercase font-bold tracking-wider"
+                                    >Departemen</TableHead
                                 >
                                 <TableHead
                                     class="text-center text-xs uppercase font-bold tracking-wider text-green-600"
@@ -351,6 +392,10 @@ const cleanLabel = (label: string) => {
                                             >{{ item.user.name }}</span
                                         >
                                     </div>
+                                </TableCell>
+
+                                <TableCell class="text-slate-600">
+                                    {{ item.user.departemen || "—" }}
                                 </TableCell>
 
                                 <TableCell class="text-center">

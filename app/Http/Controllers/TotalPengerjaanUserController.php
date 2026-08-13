@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\PengerjaanProduk;
+use App\Models\Departemen;
 use Illuminate\Support\Facades\DB;
 
 
@@ -14,7 +15,7 @@ class TotalPengerjaanUserController extends Controller
     public function index(Request $request)
 {
     $rekap = PengerjaanProduk::query()
-        ->with(['user'])
+        ->with(['user', 'user.departemen'])
         ->select(
             'user_id',
             DB::raw('count(*) as total_pengerjaan'),
@@ -34,6 +35,12 @@ class TotalPengerjaanUserController extends Controller
                 $q->where('name', 'like', "%{$search}%");
             });
         })
+
+        ->when($request->departemen_id, function ($query, $id) {
+            $query->whereHas('user', function ($q) use ($id) {
+                $q->where('departemen_id', $id);
+            });
+        })
         ->groupBy('user_id')
         ->orderBy('total_pengerjaan', 'desc')
         ->paginate(15)
@@ -42,6 +49,7 @@ class TotalPengerjaanUserController extends Controller
             'user' => [
                 'id' => $item->user->id,
                 'name' => $item->user->name,
+                'departemen' => $item->user?->departemen?->departemen,
             ],
             'total_pengerjaan' => $item->total_pengerjaan,
             'total_ok' => $item->total_ok,
@@ -51,7 +59,8 @@ class TotalPengerjaanUserController extends Controller
 
     return Inertia::render('TotalPengerjaan/Index', [
         'rekap' => $rekap,
-        'filters' => $request->only(['search', 'date_start', 'date_end']),
+        'departemens' => Departemen::orderBy('departemen', 'asc')->get(),
+        'filters' => $request->only(['search', 'date_start', 'date_end', 'departemen_id']),
     ]);
 }
 
