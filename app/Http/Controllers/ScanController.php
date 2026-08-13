@@ -269,7 +269,10 @@ class ScanController extends Controller
             return back()->withErrors(['qr' => "Produk {$request->qr} sudah berstatus BUANG dan tidak bisa diproses lagi!"]);
         }
 
-        if ($produk->proses_id === $sesi->proses_id && $produk->sudah_scan === 'Sudah') {
+        if (PengerjaanProduk::where('produk_id', $produk->id)
+            ->where('proses_id', $sesi->proses_id)
+            ->exists()
+        ) {
             return back()->withErrors(['qr' => "Produk {$request->qr} sudah discan di proses ini!"]);
         }
 
