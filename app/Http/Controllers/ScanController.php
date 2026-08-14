@@ -269,11 +269,38 @@ class ScanController extends Controller
             return back()->withErrors(['qr' => "Produk {$request->qr} sudah berstatus BUANG dan tidak bisa diproses lagi!"]);
         }
 
-        if (PengerjaanProduk::where('produk_id', $produk->id)
+        // Cek scan terakhir di proses ini
+        $existingScan = PengerjaanProduk::where('produk_id', $produk->id)
             ->where('proses_id', $sesi->proses_id)
-            ->exists()
-        ) {
-            return back()->withErrors(['qr' => "Produk {$request->qr} sudah discan di proses ini!"]);
+            ->latest('id')
+            ->first();
+
+        if ($existingScan) {
+            $prevStatus = $existingScan->status_kondisi;
+            $newStatus = $statusKondisi;
+
+            // Load departemen proses jika belum
+            $proses = $sesi->proses;
+            if (! $proses->relationLoaded('departemen')) {
+                $proses->load('departemen');
+            }
+            $isQcProcess = $proses->departemen && $proses->departemen->departemen === 'QC';
+
+            // IZINKAN REWORK di proses QC:
+            // - Multi cycle: In Proses -> In Proses (berkali-kali)
+            // - Final: In Proses -> OK (lalu tidak bisa scan lagi)
+            $allowRework = $isQcProcess
+                && (
+                    // In Proses -> In Proses (multi cycle)
+                    ($prevStatus === 'In Proses' && $newStatus === 'In Proses')
+                    ||
+                    // In Proses -> OK (final)
+                    ($prevStatus === 'In Proses' && $newStatus === 'OK')
+                );
+
+            if (! $allowRework) {
+                return back()->withErrors(['qr' => "Produk {$request->qr} sudah discan di proses ini!"]);
+            }
         }
 
         try {
