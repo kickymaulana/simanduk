@@ -19,21 +19,32 @@ class DashboardController extends Controller
 
     private const REJECT = ['Buang', 'In Proses'];
 
+    private function prosesQcIds(): array
+    {
+        return DB::table('proses')
+            ->where('departemen_id', function ($q) {
+                $q->select('id')->from('departemen')->where('departemen', 'QC');
+            })
+            ->pluck('id')
+            ->toArray();
+    }
+
     public function index(Request $request)
     {
         $now = now();
         $bulan = (int) ($request->bulan ?? $now->month);
         $tahun = (int) ($request->tahun ?? $now->year);
+        $prosesQcIds = $this->prosesQcIds();
 
         // --- Filter Waktu ---
         $monthScope = fn ($q) => $q->whereMonth('created_at', $bulan)
             ->whereYear('created_at', $tahun);
 
-        // 1. Reject Summary Bulanan
-        $totalBulan = (clone $monthScope(PengerjaanProduk::query()))->count();
-        $ok = (clone $monthScope(PengerjaanProduk::query()))->where('status_kondisi', 'OK')->count();
-        $buang = (clone $monthScope(PengerjaanProduk::query()))->where('status_kondisi', 'Buang')->count();
-        $inProses = (clone $monthScope(PengerjaanProduk::query()))->where('status_kondisi', 'In Proses')->count();
+        // 1. Reject Summary Bulanan (exclude proses QC)
+        $totalBulan = (clone $monthScope(PengerjaanProduk::query()))->whereNotIn('proses_id', $prosesQcIds)->count();
+        $ok = (clone $monthScope(PengerjaanProduk::query()))->whereNotIn('proses_id', $prosesQcIds)->where('status_kondisi', 'OK')->count();
+        $buang = (clone $monthScope(PengerjaanProduk::query()))->whereNotIn('proses_id', $prosesQcIds)->where('status_kondisi', 'Buang')->count();
+        $inProses = (clone $monthScope(PengerjaanProduk::query()))->whereNotIn('proses_id', $prosesQcIds)->where('status_kondisi', 'In Proses')->count();
         $rejectTotal = $buang + $inProses;
         $persenReject = $totalBulan ? round($rejectTotal / $totalBulan * 100, 1) : 0;
 
@@ -46,12 +57,13 @@ class DashboardController extends Controller
             'persen_reject' => $persenReject,
         ];
 
-        // 1b. Pareto Top 10 Jenis Reject
+        // 1b. Pareto Top 10 Jenis Reject (exclude proses QC)
         $paretoRows = PengerjaanCacat::query()
             ->join('pengerjaan_produk', 'pengerjaan_cacat.pengerjaan_produk_id', '=', 'pengerjaan_produk.id')
             ->whereIn('pengerjaan_produk.status_kondisi', self::REJECT)
             ->whereMonth('pengerjaan_produk.created_at', $bulan)
             ->whereYear('pengerjaan_produk.created_at', $tahun)
+            ->whereNotIn('pengerjaan_produk.proses_id', $prosesQcIds)
             ->select('pengerjaan_cacat.cacat_id', DB::raw('count(*) as total'))
             ->groupBy('pengerjaan_cacat.cacat_id')
             ->orderByDesc('total')
@@ -72,11 +84,12 @@ class DashboardController extends Controller
             ];
         })->values()->all();
 
-        // 2. Top Operator Reject
+        // 2. Top Operator Reject (exclude proses QC)
         $topOperatorReject = (clone $monthScope(PengerjaanProduk::query()))
             ->with('user.departemen')
             ->select('user_id', DB::raw('count(*) as total_reject'))
             ->whereIn('status_kondisi', self::REJECT)
+            ->whereNotIn('proses_id', $prosesQcIds)
             ->groupBy('user_id')
             ->orderByDesc('total_reject')
             ->take(10)
@@ -89,7 +102,7 @@ class DashboardController extends Controller
                 ];
             })->values()->all();
 
-        // 3. Total Output (Trend 12 Bulan Tahun Terpilih)
+        // 3. Total Output (Trend 12 Bulan Tahun Terpilih) - TETAP SEMUA PROSES
         $trendRows = (clone PengerjaanProduk::query())
             ->whereYear('created_at', $tahun)
             ->select(DB::raw('MONTH(created_at) as m'), DB::raw('count(*) as total'))
@@ -106,12 +119,17 @@ class DashboardController extends Controller
             ];
         })->values()->all();
 
-        // 4. % Reject per Departemen
+        // 4. % Reject per Departemen (exclude departemen QC)
         $rejectByDepartemen = DB::table('pengerjaan_produk')
             ->join('users', 'users.id', '=', 'pengerjaan_produk.user_id')
             ->leftJoin('departemen', 'departemen.id', '=', 'users.departemen_id')
             ->whereMonth('pengerjaan_produk.created_at', $bulan)
             ->whereYear('pengerjaan_produk.created_at', $tahun)
+            ->whereNotIn('pengerjaan_produk.proses_id', $prosesQcIds)
+            ->where(function ($q) {
+                $q->whereNull('departemen.id')
+                  ->orWhere('departemen.departemen', '!=', 'QC');
+            })
             ->select(
                 DB::raw('COALESCE(departemen.departemen, "Tanpa Departemen") as nama'),
                 DB::raw('count(*) as total'),
@@ -131,7 +149,7 @@ class DashboardController extends Controller
                 ];
             })->values()->all();
 
-        // 4b. % Reject per Operator (aktif di bulan terpilih)
+        // 4b. % Reject per Operator (exclude proses QC)
         $opRows = (clone $monthScope(PengerjaanProduk::query()))
             ->with('user.departemen')
             ->select(
@@ -139,6 +157,7 @@ class DashboardController extends Controller
                 DB::raw('count(*) as total'),
                 DB::raw("SUM(CASE WHEN status_kondisi IN ('Buang','In Proses') THEN 1 ELSE 0 END) as reject")
             )
+            ->whereNotIn('proses_id', $prosesQcIds)
             ->groupBy('user_id')
             ->having('total', '>', 0)
             ->get();
