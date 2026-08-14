@@ -35,6 +35,7 @@ import {
     IconFilterOff,
     IconClock,
     IconPrinter,
+    IconRefresh,
 } from "@tabler/icons-vue";
 import { ref, watch, onMounted, computed } from "vue";
 import {
@@ -235,6 +236,7 @@ const getDepartemenLabel = () => {
                         <TableHead class="text-center text-xs uppercase font-bold tracking-wider text-amber-600">In Proses</TableHead>
                         <TableHead class="text-center text-xs uppercase font-bold tracking-wider text-red-600">Buang</TableHead>
                         <TableHead class="text-center text-xs uppercase font-bold tracking-wider">Total Output</TableHead>
+                        <TableHead class="text-center text-xs uppercase font-bold tracking-wider text-orange-600">Rework</TableHead>
                     </TableRow>
                 </TableHeader>
 
@@ -258,9 +260,13 @@ const getDepartemenLabel = () => {
                         <TableCell class="text-center"><span class="font-bold text-amber-600">{{ item.total_proses }}</span></TableCell>
                         <TableCell class="text-center"><span class="font-bold text-red-600">{{ item.total_buang }}</span></TableCell>
                         <TableCell class="text-center font-bold">{{ item.total_pengerjaan }} Produk</TableCell>
+                        <TableCell class="text-center">
+                            <span v-if="item.total_rework > 0" class="font-bold text-orange-600">{{ item.total_rework }}x</span>
+                            <span v-else class="text-muted-foreground">0</span>
+                        </TableCell>
                     </TableRow>
                     <TableRow v-if="rekapData.length === 0" class="text-center">
-                        <TableCell colspan="7" class="py-8 text-muted-foreground">Tidak ada data</TableCell>
+                        <TableCell colspan="8" class="py-8 text-muted-foreground">Tidak ada data</TableCell>
                     </TableRow>
                 </TableBody>
             </Table>
@@ -423,6 +429,7 @@ const getDepartemenLabel = () => {
                                 <TableHead class="text-center text-xs uppercase font-bold tracking-wider text-amber-600">In Proses</TableHead>
                                 <TableHead class="text-center text-xs uppercase font-bold tracking-wider text-red-600">Buang</TableHead>
                                 <TableHead class="text-center text-xs uppercase font-bold tracking-wider">Total Output</TableHead>
+                                <TableHead class="text-center text-xs uppercase font-bold tracking-wider text-orange-600">Rework</TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -450,6 +457,13 @@ const getDepartemenLabel = () => {
                                         <IconTrophy class="size-3.5 mr-1.5" />
                                         {{ item.total_pengerjaan }} Produk
                                     </Badge>
+                                </TableCell>
+                                <TableCell class="text-center">
+                                    <Badge v-if="item.total_rework > 0" class="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 px-3 py-1">
+                                        <IconRefresh class="size-3.5 mr-1" />
+                                        {{ item.total_rework }}x
+                                    </Badge>
+                                    <span v-else class="text-muted-foreground text-xs">0</span>
                                 </TableCell>
                             </TableRow>
                         </TableBody>

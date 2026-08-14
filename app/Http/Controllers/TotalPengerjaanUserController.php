@@ -18,7 +18,9 @@ class TotalPengerjaanUserController extends Controller
             ->with(['user', 'user.departemen'])
             ->select(
                 'user_id',
-                DB::raw('count(*) as total_pengerjaan'),
+                DB::raw('count(*) as total_scan'),
+                DB::raw('COUNT(DISTINCT CONCAT(produk_id, "-", proses_id)) as total_pengerjaan'),
+                DB::raw('(count(*) - COUNT(DISTINCT CONCAT(produk_id, "-", proses_id))) as total_rework'),
                 DB::raw("COUNT(IF(status_kondisi = 'OK', 1, NULL)) as total_ok"),
                 DB::raw("COUNT(IF(status_kondisi = 'In Proses', 1, NULL)) as total_proses"),
                 DB::raw("COUNT(IF(status_kondisi = 'Buang', 1, NULL)) as total_buang")
@@ -49,10 +51,11 @@ class TotalPengerjaanUserController extends Controller
                     'name' => $item->user->name,
                     'departemen' => $item->user?->departemen?->departemen,
                 ],
-                'total_pengerjaan' => $item->total_pengerjaan,
-                'total_ok' => $item->total_ok,
-                'total_proses' => $item->total_proses,
-                'total_buang' => $item->total_buang,
+                'total_pengerjaan' => (int) $item->total_pengerjaan,
+                'total_rework' => (int) $item->total_rework,
+                'total_ok' => (int) $item->total_ok,
+                'total_proses' => (int) $item->total_proses,
+                'total_buang' => (int) $item->total_buang,
             ])->values();
         } else {
             $rekap = $query->paginate(15)
@@ -63,10 +66,11 @@ class TotalPengerjaanUserController extends Controller
                         'name' => $item->user->name,
                         'departemen' => $item->user?->departemen?->departemen,
                     ],
-                    'total_pengerjaan' => $item->total_pengerjaan,
-                    'total_ok' => $item->total_ok,
-                    'total_proses' => $item->total_proses,
-                    'total_buang' => $item->total_buang,
+                    'total_pengerjaan' => (int) $item->total_pengerjaan,
+                    'total_rework' => (int) $item->total_rework,
+                    'total_ok' => (int) $item->total_ok,
+                    'total_proses' => (int) $item->total_proses,
+                    'total_buang' => (int) $item->total_buang,
                 ]);
         }
 
