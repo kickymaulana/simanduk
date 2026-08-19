@@ -21,6 +21,7 @@ import {
     IconPlayerStop,
     IconPlayerPlay,
     IconX,
+    IconTarget,
 } from "@tabler/icons-vue";
 import { ref, watch } from "vue";
 
@@ -123,6 +124,7 @@ const cleanLabel = (label: string) => {
                                 <TableHead>Jenis</TableHead>
                                 <TableHead>Shift</TableHead>
                                 <TableHead>Total Scan</TableHead>
+                                <TableHead>Target</TableHead>
                                 <TableHead class="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -193,6 +195,26 @@ const cleanLabel = (label: string) => {
                                             class="text-xs text-muted-foreground uppercase italic font-medium"
                                             >Scan</span
                                         >
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div class="flex items-center gap-2">
+                                        <Badge
+                                            v-if="item.target"
+                                            variant="outline"
+                                            class="font-mono text-sm border-primary/50 text-primary"
+                                        >
+                                            <IconTarget class="mr-1 size-3" />
+                                            {{ item.target }}
+                                        </Badge>
+                                        <Badge
+                                            v-else
+                                            variant="outline"
+                                            class="font-mono text-sm border-muted text-muted-foreground"
+                                        >
+                                            <IconTarget class="mr-1 size-3" />
+                                            —
+                                        </Badge>
                                     </div>
                                 </TableCell>
                                 <TableCell

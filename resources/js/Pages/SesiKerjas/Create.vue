@@ -4,6 +4,7 @@ import { Head, Link, useForm } from "@inertiajs/vue3";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -20,6 +21,7 @@ import {
     IconClock,
     IconSettings,
     IconCategory,
+    IconTarget,
 } from "@tabler/icons-vue";
 
 defineOptions({ layout: AuthenticatedLayout });
@@ -35,9 +37,25 @@ const form = useForm({
     proses_id: "" as string | number,
     jenis: "Body",
     user_ids: [] as number[],
+    target: "" as string | number,
 });
 
 const submit = () => {
+    // Validasi manual sebelum submit
+    const errors: Record<string, string> = {};
+    
+    if (!form.value.shift_id) errors.shift_id = 'Wajib pilih shift.';
+    if (!form.value.proses_id) errors.proses_id = 'Wajib pilih proses.';
+    if (!form.value.jenis) errors.jenis = 'Wajib pilih jenis produksi.';
+    if (!form.value.target) errors.target = 'Target Produk diperlukan.';
+    
+    if (Object.keys(errors).length) {
+        Object.entries(errors).forEach(([key, message]) => {
+            setRawError(key, message);
+        });
+        return;
+    }
+    
     form.post(route("sesikerjas.store"));
 };
 </script>
@@ -123,6 +141,25 @@ const submit = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label class="flex items-center gap-2 font-semibold">
+                                <IconTarget class="size-4 text-primary" /> Target Produk
+                            </Label>
+                            <Input
+                                type="number"
+                                v-model="form.target"
+                                placeholder="Contoh: 50"
+                                min="1"
+                                class="w-full"
+                            />
+                            <p class="text-[10px] text-muted-foreground italic">
+                                Opsional. Jumlah produk yang diharapkan selesai dalam sesi ini.
+                            </p>
+                            <p v-if="form.errors.target" class="text-[10px] text-destructive font-medium italic">
+                                {{ form.errors.target }}
+                            </p>
                         </div>
 
                         <div class="space-y-4">

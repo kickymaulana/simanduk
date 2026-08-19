@@ -20,6 +20,7 @@ import {
     IconSearch,
     IconScan,
     IconUserCheck,
+    IconFileAnalytics,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -82,6 +83,13 @@ const filteredNavMain = computed(() => {
         url: route("total.pengerjaan.user"),
         icon: IconReportAnalytics,
         root: "TotalPengerjaan",
+    });
+
+    menus.push({
+        title: "Laporan Scan Perbulan",
+        url: route("laporan.scan.perbulan"),
+        icon: IconFileAnalytics,
+        root: "LaporanScanPerbulan",
     });
 
     menus.push({

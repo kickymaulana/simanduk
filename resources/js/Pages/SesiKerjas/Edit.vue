@@ -4,6 +4,7 @@ import { Head, Link, useForm } from "@inertiajs/vue3";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -20,6 +21,7 @@ import {
     IconClock,
     IconSettings,
     IconCategory,
+    IconTarget,
 } from "@tabler/icons-vue";
 
 const props = defineProps<{
@@ -44,6 +46,7 @@ const form = useForm({
     proses_id: props.sesikerja.proses_id, // Masukkan data lama
     jenis: props.sesikerja.jenis,
     user_ids: existingMemberIds,
+    target: props.sesikerja.target ?? "",
 });
 
 const submit = () => {
@@ -132,6 +135,25 @@ const submit = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label class="flex items-center gap-2 font-semibold">
+                                <IconTarget class="size-4 text-primary" /> Target Produk
+                            </Label>
+                            <Input
+                                type="number"
+                                v-model="form.target"
+                                placeholder="Contoh: 50"
+                                min="1"
+                                class="w-full"
+                            />
+                            <p class="text-[10px] text-muted-foreground italic">
+                                Opsional. Jumlah produk yang diharapkan selesai dalam sesi ini.
+                            </p>
+                            <p v-if="form.errors.target" class="text-[10px] text-destructive font-medium italic">
+                                {{ form.errors.target }}
+                            </p>
                         </div>
 
                         <div class="space-y-4">

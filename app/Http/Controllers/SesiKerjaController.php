@@ -69,7 +69,8 @@ class SesiKerjaController extends Controller
             'proses_id' => 'required|exists:proses,id',
             'jenis' => 'required|in:Body,Tangki',
             'user_ids'  => 'nullable|array', // ID anggota yang dipilih
-            'user_ids.*'=> 'exists:users,id'
+            'user_ids.*'=> 'exists:users,id',
+            'target' => 'nullable|integer|min:1',
         ]);
         $validated['leader_id'] = Auth::id();
 
@@ -81,6 +82,7 @@ class SesiKerjaController extends Controller
                 'shift_id'  => $validated['shift_id'],
                 'proses_id' => $validated['proses_id'],
                 'jenis' => $validated['jenis'],
+                'target' => $validated['target'] ?? null,
             ]);
 
             if (!empty($validated['user_ids'])) {
@@ -102,7 +104,7 @@ class SesiKerjaController extends Controller
     {
         $sesikerja->load([
             'leader',
-            'shift', // Tambahkan relasi shift
+            'shift',
             'sesi_kerja_members.user',
             'pengerjaan_produks' => function($query) {
                 $query->with(['produk', 'proses'])->latest();
@@ -125,10 +127,27 @@ class SesiKerjaController extends Controller
             'total_reject'    => $allUnique->where('status_kondisi', 'Buang')->count(),
         ];
 
+        // Progress Target (berdasarkan total scan, bukan unik)
+        $totalScan = $pengerjaanRows->count();
+        $target = $sesikerja->target;
+        $targetProgress = null;
+
+        if ($target) {
+            $persentase = $target > 0 ? round(($totalScan / $target) * 100, 1) : 0;
+            $targetProgress = [
+                'target'      => $target,
+                'actual'      => $totalScan,
+                'persentase'  => $persentase,
+                'sisa'        => max($target - $totalScan, 0),
+                'status'      => $persentase >= 100 ? 'target_tercapai' : ($persentase >= 80 ? 'baik' : ($persentase >= 50 ? 'sedang' : 'rendah')),
+            ];
+        }
+
         return Inertia::render('SesiKerjas/Show', [
             'sesikerja' => $sesikerja,
             'stats'     => $stats,
-            'pengerjaan_unik' => $pengerjaanLimit
+            'pengerjaan_unik' => $pengerjaanLimit,
+            'targetProgress' => $targetProgress,
         ]);
     }
 
@@ -196,6 +215,7 @@ class SesiKerjaController extends Controller
             'jenis' => 'required|in:Body,Tangki',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
+            'target' => 'nullable|integer|min:1',
         ]);
 
         DB::transaction(function () use ($validated, $sesikerja) {
@@ -204,6 +224,7 @@ class SesiKerjaController extends Controller
                 'shift_id' => $validated['shift_id'],
                 'proses_id' => $validated['proses_id'],
                 'jenis' => $validated['jenis'],
+                'target' => $validated['target'] ?? null,
             ]);
 
             // Update Member: Hapus yang lama, masukkan yang baru

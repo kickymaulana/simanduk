@@ -29,6 +29,7 @@ import {
     IconDotsVertical,
     IconArrowRight,
     IconClockCheck,
+    IconTarget,
 } from "@tabler/icons-vue";
 import {
     AlertDialog,
@@ -57,6 +58,13 @@ const props = defineProps<{
         total_reject: number;
     };
     pengerjaan_unik: any[];
+    targetProgress: {
+        target: number;
+        actual: number;
+        persentase: number;
+        sisa: number;
+        status: string;
+    } | null;
 }>();
 
 defineOptions({ layout: AuthenticatedLayout });
@@ -75,11 +83,11 @@ const formatDate = (dateString: string | null) => {
     });
 };
 
-// Hitung durasi jika diperlukan
-const getDuration = () => {
-    if (!props.sesikerja.jam_masuk || !props.sesikerja.jam_pulang) return null;
-    const start = new Date(props.sesikerja.jam_masuk);
-    const end = new Date(props.sesikerja.jam_pulang);
+// Durasi sesi berdasarkan created_at dan updated_at (actual)
+const getActualDuration = () => {
+    if (!props.sesikerja.created_at || !props.sesikerja.updated_at) return null;
+    const start = new Date(props.sesikerja.created_at);
+    const end = new Date(props.sesikerja.updated_at);
     const diffMs = end.getTime() - start.getTime();
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -254,6 +262,72 @@ const getDuration = () => {
             </Card>
         </div>
 
+        <!-- Target Progress Card -->
+        <div v-if="targetProgress" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card class="border-none shadow-md bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                <CardHeader class="pb-2">
+                    <CardTitle class="flex items-center gap-2 text-primary text-lg">
+                        <IconTarget class="size-5" /> Progress Target Sesi
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white/50 rounded-xl p-4 border border-blue-100">
+                                <p class="text-xs font-bold uppercase text-muted-foreground">Target</p>
+                                <p class="text-3xl font-bold text-primary">{{ targetProgress.target }} Unit</p>
+                            </div>
+                            <div class="bg-white/50 rounded-xl p-4 border border-green-100">
+                                <p class="text-xs font-bold uppercase text-muted-foreground">Actual (Total Scan)</p>
+                                <p class="text-3xl font-bold text-green-600">{{ targetProgress.actual }} Unit</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-muted-foreground mb-2">Progress</p>
+                            <div class="h-3 bg-blue-100 rounded-full overflow-hidden">
+                                <div
+                                    class="h-full rounded-full transition-all duration-500"
+                                    :class="{
+                                        'bg-green-500': targetProgress.status === 'target_tercapai' || targetProgress.status === 'baik',
+                                        'bg-amber-500': targetProgress.status === 'sedang',
+                                        'bg-red-500': targetProgress.status === 'rendah',
+                                    }"
+                                    :style="{ width: Math.min(targetProgress.persentase, 100) + '%' }"
+                                ></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="bg-white/50 rounded-xl p-3 border border-green-100">
+                                <p class="text-xs font-bold uppercase text-muted-foreground">Pencapaian</p>
+                                <p class="font-bold text-green-600">
+                                    {{ targetProgress.persentase }}%
+                                    <span v-if="targetProgress.persentase >= 100" class="text-xs text-green-500"> (Target Tercapai!)</span>
+                                </p>
+                            </div>
+                            <div class="bg-white/50 rounded-xl p-3 border border-red-100">
+                                <p class="text-xs font-bold uppercase text-muted-foreground">Sisa</p>
+                                <p class="font-bold text-red-600">
+                                    {{ targetProgress.sisa }} Unit
+                                    <span v-if="targetProgress.sisa === 0" class="text-xs text-green-500"> (Selesai)</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-blue-100">
+                            <p class="text-xs text-muted-foreground">
+                                Status: 
+                                <span class="font-semibold capitalize">
+                                    {{ targetProgress.status === 'target_tercapai' ? 'Target Tercapai ✓' :
+                                       targetProgress.status === 'baik' ? 'Baik (≥80%)' :
+                                       targetProgress.status === 'sedang' ? 'Sedang (50-79%)' :
+                                       'Rendah (<50%)' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card class="md:col-span-2 border-none shadow-lg">
                 <CardHeader>
@@ -278,35 +352,20 @@ const getDuration = () => {
                         </div>
                         <div class="space-y-1">
                             <p class="text-sm text-muted-foreground">
-                                Waktu Masuk Sesi
+                                Waktu Mulai Sesi
                             </p>
                             <p class="text-lg font-semibold">
-                                {{ formatDate(sesikerja.jam_masuk) }}
+                                {{ formatDate(sesikerja.created_at) }}
                             </p>
                         </div>
                         <div
-                            v-if="sesikerja.jam_pulang"
                             class="sm:col-span-2 mt-2 p-3 bg-primary/5 rounded-lg border-l-4 border-primary"
                         >
                             <p
                                 class="text-sm font-medium flex items-center gap-2 text-primary"
                             >
-                                <IconClock class="size-4" /> Sesi Selesai:
-                                {{ formatDate(sesikerja.jam_pulang) }}
-                                <span class="ml-auto text-xs opacity-70"
-                                    >Durasi: {{ getDuration() }}</span
-                                >
-                            </p>
-                        </div>
-                        <div
-                            v-else
-                            class="sm:col-span-2 mt-2 p-3 bg-amber-50 rounded-lg border-l-4 border-amber-500"
-                        >
-                            <p
-                                class="text-sm font-medium flex items-center gap-2 text-amber-700 italic"
-                            >
-                                <IconLoader class="size-4 animate-spin-slow" />
-                                Sesi Sedang Berlangsung (Open)
+                                <IconClock class="size-4" /> Durasi Aktual:
+                                {{ getActualDuration() }}
                             </p>
                         </div>
                     </div>

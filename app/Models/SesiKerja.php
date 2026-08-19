@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
-#[Fillable(['leader_id', 'jam_masuk', 'jam_pulang', 'jenis', 'shift_id', 'proses_id'])]
+#[Fillable(['leader_id', 'jenis', 'shift_id', 'proses_id', 'target'])]
 #[Table('sesi_kerja')]
 class SesiKerja extends Model
 {
