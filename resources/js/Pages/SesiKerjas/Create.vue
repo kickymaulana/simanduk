@@ -44,14 +44,14 @@ const submit = () => {
     // Validasi manual sebelum submit
     const errors: Record<string, string> = {};
     
-    if (!form.value.shift_id) errors.shift_id = 'Wajib pilih shift.';
-    if (!form.value.proses_id) errors.proses_id = 'Wajib pilih proses.';
-    if (!form.value.jenis) errors.jenis = 'Wajib pilih jenis produksi.';
-    if (!form.value.target) errors.target = 'Target Produk diperlukan.';
+    if (!form.shift_id) errors.shift_id = 'Wajib pilih shift.';
+    if (!form.proses_id) errors.proses_id = 'Wajib pilih proses.';
+    if (!form.jenis) errors.jenis = 'Wajib pilih jenis produksi.';
+    if (!form.target) errors.target = 'Target Produk diperlukan.';
     
     if (Object.keys(errors).length) {
         Object.entries(errors).forEach(([key, message]) => {
-            setRawError(key, message);
+            form.setError(key, message);
         });
         return;
     }
