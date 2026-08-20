@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
     Table,
     TableBody,
@@ -40,6 +40,7 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters.search || "");
+const authUserId = usePage().props.auth.user.id;
 let timeout: any;
 
 // Watcher untuk pencarian dengan debounce 500ms
@@ -240,6 +241,7 @@ const cleanLabel = (label: string) => {
                                     </Button>
 
                                     <Button
+                                        v-if="item.leader_id === authUserId"
                                         @click="toggleSesi(item.id)"
                                         :variant="
                                             sesi_kerja_id === item.id

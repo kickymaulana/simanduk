@@ -19,8 +19,8 @@ class SesiKerjaController extends Controller
     {
 
         $sesikerjas = SesiKerja::query()
-            // Syarat utama: Harus milik user yang sedang login
-            ->where('leader_id', auth()->id())
+            // Admin lihat semua sesi; non-admin hanya sesi miliknya
+            ->when(! auth()->user()->hasRole('admin'), fn ($q) => $q->where('leader_id', auth()->id()))
             ->with(['leader', 'sesi_kerja_members.user', 'shift', 'proses'])
             ->withCount(['pengerjaan_produks as total_pengerjaan' => function ($query) {
                 $query->select(DB::raw('count(distinct produk_id, proses_id)'));
@@ -246,6 +246,11 @@ class SesiKerjaController extends Controller
 
     public function aktifkan(SesiKerja $sesikerja)
     {
+        if ($sesikerja->leader_id !== auth()->id()) {
+            return Redirect::route('sesikerjas.index')
+                ->withErrors(['error' => 'Hanya leader yang membuat sesi ini yang bisa mengaktifkannya.']);
+        }
+
         session(['sesi_kerja_id' => $sesikerja->id]);
 
         return Redirect::route('sesikerjas.index')
