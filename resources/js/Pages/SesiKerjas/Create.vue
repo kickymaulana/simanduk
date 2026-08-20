@@ -22,6 +22,7 @@ import {
     IconSettings,
     IconCategory,
     IconTarget,
+    IconCalendarEvent,
 } from "@tabler/icons-vue";
 
 defineOptions({ layout: AuthenticatedLayout });
@@ -38,6 +39,7 @@ const form = useForm({
     jenis: "Body",
     user_ids: [] as number[],
     target: "" as string | number,
+    tanggal_masuk: "",
 });
 
 const submit = () => {
@@ -48,6 +50,7 @@ const submit = () => {
     if (!form.proses_id) errors.proses_id = 'Wajib pilih proses.';
     if (!form.jenis) errors.jenis = 'Wajib pilih jenis produksi.';
     if (!form.target) errors.target = 'Target Produk diperlukan.';
+    if (!form.tanggal_masuk) errors.tanggal_masuk = 'Wajib pilih tanggal masuk.';
     
     if (Object.keys(errors).length) {
         Object.entries(errors).forEach(([key, message]) => {
@@ -159,6 +162,23 @@ const submit = () => {
                             </p>
                             <p v-if="form.errors.target" class="text-[10px] text-destructive font-medium italic">
                                 {{ form.errors.target }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label class="flex items-center gap-2 font-semibold">
+                                <IconCalendarEvent class="size-4 text-primary" /> Tanggal Masuk
+                            </Label>
+                            <Input
+                                type="date"
+                                v-model="form.tanggal_masuk"
+                                class="w-full"
+                            />
+                            <p class="text-[10px] text-muted-foreground italic">
+                                Tanggal shift ini berjalan (hari kerja). Untuk SHIFT 3 (00:00 - 08:00), pilih tanggal saat shift dimulai.
+                            </p>
+                            <p v-if="form.errors.tanggal_masuk" class="text-[10px] text-destructive font-medium italic">
+                                {{ form.errors.tanggal_masuk }}
                             </p>
                         </div>
 

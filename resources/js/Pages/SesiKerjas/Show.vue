@@ -352,10 +352,10 @@ const getActualDuration = () => {
                         </div>
                         <div class="space-y-1">
                             <p class="text-sm text-muted-foreground">
-                                Waktu Mulai Sesi
+                                Tanggal Sesi
                             </p>
                             <p class="text-lg font-semibold">
-                                {{ formatDate(sesikerja.created_at) }}
+                                {{ formatDate(sesikerja.tanggal_masuk) }}
                             </p>
                         </div>
                         <div

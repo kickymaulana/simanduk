@@ -40,20 +40,20 @@ class LaporanScanPerbulanController extends Controller
                 return $row->tanggal . '-' . $row->proses_id;
             });
 
-        // 2. Target per (tanggal, proses_id)
+        // 2. Target per (tanggal_masuk, proses_id)
         $targetRows = SesiKerja::query()
-            ->whereMonth('created_at', $bulan)
-            ->whereYear('created_at', $tahun)
+            ->whereMonth('tanggal_masuk', $bulan)
+            ->whereYear('tanggal_masuk', $tahun)
             ->whereNotNull('target')
             ->select(
-                DB::raw('DATE(created_at) as tanggal'),
+                'tanggal_masuk',
                 'proses_id',
                 DB::raw('sum(target) as target')
             )
-            ->groupBy('tanggal', 'proses_id')
+            ->groupBy('tanggal_masuk', 'proses_id')
             ->get()
             ->keyBy(function ($row) {
-                return $row->tanggal . '-' . $row->proses_id;
+                return $row->tanggal_masuk . '-' . $row->proses_id;
             });
 
         // Build rows per tanggal

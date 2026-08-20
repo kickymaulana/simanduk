@@ -71,6 +71,7 @@ class SesiKerjaController extends Controller
             'user_ids'  => 'nullable|array', // ID anggota yang dipilih
             'user_ids.*'=> 'exists:users,id',
             'target' => 'nullable|integer|min:1',
+            'tanggal_masuk' => 'required|date',
         ]);
         $validated['leader_id'] = Auth::id();
 
@@ -83,6 +84,7 @@ class SesiKerjaController extends Controller
                 'proses_id' => $validated['proses_id'],
                 'jenis' => $validated['jenis'],
                 'target' => $validated['target'] ?? null,
+                'tanggal_masuk' => $validated['tanggal_masuk'],
             ]);
 
             if (!empty($validated['user_ids'])) {
@@ -216,6 +218,7 @@ class SesiKerjaController extends Controller
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
             'target' => 'nullable|integer|min:1',
+            'tanggal_masuk' => 'required|date',
         ]);
 
         DB::transaction(function () use ($validated, $sesikerja) {
@@ -225,6 +228,7 @@ class SesiKerjaController extends Controller
                 'proses_id' => $validated['proses_id'],
                 'jenis' => $validated['jenis'],
                 'target' => $validated['target'] ?? null,
+                'tanggal_masuk' => $validated['tanggal_masuk'],
             ]);
 
             // Update Member: Hapus yang lama, masukkan yang baru

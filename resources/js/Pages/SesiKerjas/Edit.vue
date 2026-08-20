@@ -22,6 +22,7 @@ import {
     IconSettings,
     IconCategory,
     IconTarget,
+    IconCalendarEvent,
 } from "@tabler/icons-vue";
 
 const props = defineProps<{
@@ -30,6 +31,8 @@ const props = defineProps<{
         shift_id: number;
         proses_id: number; // Tambahkan ini
         jenis: string;
+        target: number | null;
+        tanggal_masuk: string | null;
         sesi_kerja_members: Array<{ user_id: number }>;
     };
     shifts: Array<{ id: number; shift: string }>;
@@ -47,6 +50,7 @@ const form = useForm({
     jenis: props.sesikerja.jenis,
     user_ids: existingMemberIds,
     target: props.sesikerja.target ?? "",
+    tanggal_masuk: props.sesikerja.tanggal_masuk ?? "",
 });
 
 const submit = () => {
@@ -153,6 +157,23 @@ const submit = () => {
                             </p>
                             <p v-if="form.errors.target" class="text-[10px] text-destructive font-medium italic">
                                 {{ form.errors.target }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label class="flex items-center gap-2 font-semibold">
+                                <IconCalendarEvent class="size-4 text-primary" /> Tanggal Masuk
+                            </Label>
+                            <Input
+                                type="date"
+                                v-model="form.tanggal_masuk"
+                                class="w-full"
+                            />
+                            <p class="text-[10px] text-muted-foreground italic">
+                                Tanggal shift ini berjalan (hari kerja). Untuk SHIFT 3 (00:00 - 08:00), pilih tanggal saat shift dimulai.
+                            </p>
+                            <p v-if="form.errors.tanggal_masuk" class="text-[10px] text-destructive font-medium italic">
+                                {{ form.errors.tanggal_masuk }}
                             </p>
                         </div>
 

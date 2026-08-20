@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
-#[Fillable(['leader_id', 'jenis', 'shift_id', 'proses_id', 'target'])]
+#[Fillable(['leader_id', 'jenis', 'shift_id', 'proses_id', 'target', 'tanggal_masuk'])]
 #[Table('sesi_kerja')]
 class SesiKerja extends Model
 {
@@ -42,7 +42,9 @@ class SesiKerja extends Model
     protected function tanggal(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->updated_at?->translatedFormat('d F Y, H:i'),
+            get: fn () => $this->tanggal_masuk
+                ? \Carbon\Carbon::parse($this->tanggal_masuk)->translatedFormat('d F Y')
+                : null,
         );
     }
 }
