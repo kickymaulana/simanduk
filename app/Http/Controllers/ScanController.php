@@ -66,6 +66,8 @@ class ScanController extends Controller
             'nomor_mesin' => 'required|string',
             'nomor_mould' => 'required|string',
             'asal_slip'   => 'required|string',
+            'is_sample'   => 'sometimes|boolean',
+            'kode_sampel' => 'required_if:is_sample,1|nullable|string|max:255',
         ], [
             'qr.unique'       => 'QR Code ini sudah terdaftar.',
             'qr.size'         => 'QR Code harus tepat 10 karakter.',
@@ -73,6 +75,7 @@ class ScanController extends Controller
             'nomor_mesin.required' => 'Pilih nomor mesin!',
             'nomor_mould.required' => 'Pilih nomor mould!',
             'asal_slip.required'   => 'Pilih asal slip!',
+            'kode_sampel.required_if' => 'Kode sampel wajib diisi saat produk ditandai sampel!',
         ]);
 
         $sesi = $this->sesiAktif();
@@ -95,6 +98,8 @@ class ScanController extends Controller
                     'nomor_mesin' => $validated['nomor_mesin'] ?? null,
                     'nomor_mould' => $validated['nomor_mould'] ?? null,
                     'asal_slip'   => $validated['asal_slip'] ?? null,
+                    'is_sample'   => $validated['is_sample'] ?? false,
+                    'kode_sampel' => $validated['is_sample'] ?? false ? ($validated['kode_sampel'] ?? null) : null,
                 ]);
 
                 $this->catatPengerjaan($produk, $sesi, 'OK');

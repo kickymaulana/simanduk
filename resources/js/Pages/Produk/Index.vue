@@ -20,6 +20,7 @@ import {
     IconQrcode,
     IconShoppingCart,
     IconEye,
+    IconFlask,
 } from "@tabler/icons-vue";
 import { ref, watch } from "vue";
 
@@ -34,6 +35,8 @@ const props = defineProps<{
             jenis: string;
             status_akhir: string;
             sudah_scan: string;
+            is_sample: boolean;
+            kode_sampel: string | null;
             proses?: {
                 proses: string;
             };
@@ -104,6 +107,7 @@ const cleanLabel = (label: string) => {
                             <TableRow class="bg-muted/50">
                                 <TableHead>QR Code</TableHead>
                                 <TableHead>Jenis</TableHead>
+                                <TableHead>Sampel</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Proses</TableHead>
                                 <TableHead>Scan</TableHead>
@@ -113,7 +117,7 @@ const cleanLabel = (label: string) => {
                         </TableHeader>
                         <TableBody>
                             <TableRow v-if="produks.data.length === 0">
-                                <TableCell colspan="7" class="h-24 text-center text-muted-foreground">
+                                <TableCell colspan="8" class="h-24 text-center text-muted-foreground">
                                     Data produk tidak ditemukan.
                                 </TableCell>
                             </TableRow>
@@ -126,6 +130,12 @@ const cleanLabel = (label: string) => {
                                     </div>
                                 </TableCell>
                                 <TableCell>{{ item.jenis }}</TableCell>
+                                <TableCell>
+                                    <Badge v-if="item.is_sample" variant="secondary" class="font-black uppercase italic bg-amber-100 text-amber-700 hover:bg-amber-100">
+                                        <IconFlask class="size-3" /> {{ item.kode_sampel }}
+                                    </Badge>
+                                    <span v-else class="text-muted-foreground text-xs italic">-</span>
+                                </TableCell>
                                 <TableCell>
                                     <Badge :class="item.status_akhir === 'OK' ? 'bg-green-500' : 'bg-red-500'">
                                         {{ item.status_akhir }}

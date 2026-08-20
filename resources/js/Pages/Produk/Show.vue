@@ -14,9 +14,9 @@ import {
     IconTruck,
     IconBarcode,
     IconCalendar,
-    IconArrowLeft // Icon untuk tombol kembali
+    IconArrowLeft,
+    IconFlask // Icon untuk tombol kembali
 } from "@tabler/icons-vue";
-
 const props = defineProps<{
     produk: any;
     backUrl: string;
@@ -64,9 +64,12 @@ defineOptions({ layout: AuthenticatedLayout });
                     <CardContent class="space-y-6">
                         <div class="flex items-center gap-4 p-4 rounded-2xl bg-muted/30 dark:bg-slate-950/50 border border-dashed border-slate-300 dark:border-slate-700">
                             <IconBarcode class="size-8 text-slate-400" />
-                            <div>
+                            <div class="flex-1">
                                 <p class="text-[9px] font-bold uppercase text-muted-foreground">Nomor Seri / Barcode</p>
                                 <p class="text-lg font-black tracking-tight">{{ produk.qrcode }}</p>
+                                <Badge v-if="produk.is_sample" variant="secondary" class="mt-1 font-black uppercase italic bg-amber-100 text-amber-700 hover:bg-amber-100">
+                                    <IconFlask class="size-3 mr-1" /> Sampel · {{ produk.kode_sampel }}
+                                </Badge>
                             </div>
                         </div>
 

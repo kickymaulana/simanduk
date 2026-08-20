@@ -5,19 +5,22 @@ import { ref, onMounted, watch } from "vue";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "vue-sonner";
-import { IconScan, IconLoader2, IconArrowLeft, IconClock } from "@tabler/icons-vue";
+import { IconScan, IconLoader2, IconArrowLeft, IconClock, IconFlask } from "@tabler/icons-vue";
 
 const props = defineProps<{
     sesi: any;
 }>();
 
 const qrInput = ref<HTMLInputElement | null>(null);
+const kodeSampelInput = ref<HTMLInputElement | null>(null);
 
 const form = useForm({
     qr: "",
     nomor_mesin: "",
     nomor_mould: "",
     asal_slip: "",
+    is_sample: false,
+    kode_sampel: "",
 });
 
 const listMesin = ["Mesin 01", "Mesin 02"];
@@ -58,12 +61,20 @@ const scan = () => {
         return;
     }
 
+    if (form.is_sample && !form.kode_sampel.trim()) {
+        toast.error("Kode Sampel Wajib", {
+            description: "Isi kode sampel terlebih dahulu, atau hapus tanda sampel.",
+        });
+        if (kodeSampelInput.value) kodeSampelInput.value.focus();
+        return;
+    }
+
     if (!form.qr) return;
 
     form.post(route("scan.awal_store"), {
         preserveScroll: true,
         onSuccess: () => {
-            form.reset("qr");
+            form.reset("qr", "kode_sampel");
             focusScanner();
         },
         onError: (errors) => {
@@ -130,6 +141,32 @@ defineOptions({ layout: AuthenticatedLayout });
                             <option v-for="s in listSlip" :key="s.value" :value="s.value">{{ s.label }}</option>
                         </select>
                         <p v-if="form.errors.asal_slip" class="text-[10px] text-red-600 font-semibold">{{ form.errors.asal_slip }}</p>
+                    </div>
+
+                    <div class="pt-1 border-t border-slate-200 dark:border-slate-700">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                v-model="form.is_sample"
+                                @change="form.is_sample ? kodeSampelInput?.focus() : focusScanner()"
+                                class="size-4 accent-blue-600"
+                            />
+                            <span class="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                                <IconFlask class="size-3" /> Tandai Produk Sampel
+                            </span>
+                        </label>
+                        <div v-if="form.is_sample" class="mt-2 space-y-1">
+                            <input
+                                ref="kodeSampelInput"
+                                v-model="form.kode_sampel"
+                                type="text"
+                                maxlength="255"
+                                placeholder="Ketik kode sampel..."
+                                class="w-full rounded-md border-slate-300 px-3 py-2 text-sm dark:bg-slate-800 dark:text-white"
+                                @keyup.enter="scan"
+                            />
+                            <p v-if="form.errors.kode_sampel" class="text-[10px] text-red-600 font-semibold">{{ form.errors.kode_sampel }}</p>
+                        </div>
                     </div>
                 </div>
 
