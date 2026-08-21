@@ -22,6 +22,7 @@ use App\Http\Controllers\TotalPengerjaanUserController;
 use App\Http\Controllers\LogTemuanRejectController;
 use App\Http\Controllers\ProsesProduksiController;
 use App\Http\Controllers\StokController;
+use App\Http\Controllers\LaporanKualitasController;
 use App\Http\Controllers\LaporanScanController;
 use App\Http\Controllers\Master\KualitasController;
 use App\Http\Controllers\Master\WarnaController;
@@ -158,4 +159,6 @@ Route::middleware('auth')->group(function () {
     Route::get('qr-belum-discan/{proses}', [QrBelumDiscanController::class, 'detail'])->name('qr.belum.discan.show');
 
     Route::get('laporan-scan', [LaporanScanController::class, 'index'])->name('laporan.scan');
+
+    Route::get('laporan-kualitas', [LaporanKualitasController::class, 'index'])->name('laporan.kualitas');
 });

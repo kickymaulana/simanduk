@@ -93,6 +93,13 @@ const filteredNavMain = computed(() => {
     });
 
     menus.push({
+        title: "Laporan Kualitas",
+        url: route("laporan.kualitas"),
+        icon: IconPalette,
+        root: "LaporanKualitas",
+    });
+
+    menus.push({
         title: "Log Temuan Reject",
         url: route("log.temuan.reject"),
         icon: IconClipboardList,
