@@ -72,7 +72,7 @@ class QrBelumDiscanController extends Controller
     public function detail(Request $request, Proses $proses)
     {
         $produks = $this->queryKandidat($proses, $request)
-            ->with(['proses'])
+            ->with(['proses', 'latestPengerjaan.user:id,name', 'latestPengerjaan.proses:id,proses'])
             ->when($request->search, fn ($q) => $q->where('qrcode', 'like', "%{$request->search}%"))
             ->latest('updated_at')
             ->paginate(15)

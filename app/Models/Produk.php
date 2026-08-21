@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\Guarded;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Guarded([])]
 #[Table('produk')]
@@ -22,6 +23,11 @@ class Produk extends Model
     public function pengerjaan_produks(): HasMany
     {
         return $this->hasMany(PengerjaanProduk::class, 'produk_id');
+    }
+
+    public function latestPengerjaan(): HasOne
+    {
+        return $this->hasOne(PengerjaanProduk::class)->latestOfMany();
     }
 
     public function kualitas(): BelongsTo

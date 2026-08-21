@@ -128,12 +128,13 @@ watch(jenis, () => go());
                                 <TableHead>Mesin</TableHead>
                                 <TableHead>Mould</TableHead>
                                 <TableHead>Asal Slip</TableHead>
+                                <TableHead>Scan Terakhir</TableHead>
                                 <TableHead>Update Terakhir</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             <TableRow v-if="produks.data.length === 0">
-                                <TableCell colspan="7" class="h-24 text-center text-muted-foreground italic">
+                                <TableCell colspan="8" class="h-24 text-center text-muted-foreground italic">
                                     Tidak ada produk yang belum discan pada rentang ini.
                                 </TableCell>
                             </TableRow>
@@ -148,6 +149,15 @@ watch(jenis, () => go());
                                 <TableCell class="text-muted-foreground">{{ item.nomor_mesin ?? '-' }}</TableCell>
                                 <TableCell class="text-muted-foreground">{{ item.nomor_mould ?? '-' }}</TableCell>
                                 <TableCell class="text-muted-foreground">{{ item.asal_slip ?? '-' }}</TableCell>
+                                <TableCell>
+                                    <template v-if="item.latest_pengerjaan">
+                                        <span class="text-xs font-semibold">{{ item.latest_pengerjaan.user?.name ?? '-' }}</span>
+                                        <Badge variant="outline" class="ml-1 font-normal">
+                                            {{ item.latest_pengerjaan.proses?.proses ?? '-' }}
+                                        </Badge>
+                                    </template>
+                                    <span v-else class="text-muted-foreground text-xs italic">-</span>
+                                </TableCell>
                                 <TableCell class="text-xs text-muted-foreground">{{ item.updated_at }}</TableCell>
                             </TableRow>
                         </TableBody>
