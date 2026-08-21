@@ -86,10 +86,10 @@ const filteredNavMain = computed(() => {
     });
 
     menus.push({
-        title: "Laporan Scan Perbulan",
-        url: route("laporan.scan.perbulan"),
+        title: "Laporan Scan",
+        url: route("laporan.scan"),
         icon: IconFileAnalytics,
-        root: "LaporanScanPerbulan",
+        root: "LaporanScan",
     });
 
     menus.push({

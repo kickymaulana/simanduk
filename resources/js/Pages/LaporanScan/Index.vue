@@ -41,6 +41,7 @@ const props = defineProps<{
     filter: {
         bulan: number;
         tahun: number;
+        jenis: string | null;
         daftar_bulan: Record<number, string>;
         daftar_tahun: number[];
     };
@@ -48,10 +49,11 @@ const props = defineProps<{
 
 const selectedBulan = ref<number>(props.filter.bulan);
 const selectedTahun = ref<number>(props.filter.tahun);
+const selectedJenis = ref<string>(props.filter.jenis ?? "all");
 
 const updateFilter = () => {
     router.get(
-        `?bulan=${selectedBulan.value}&tahun=${selectedTahun.value}`,
+        `?bulan=${selectedBulan.value}&tahun=${selectedTahun.value}&jenis=${selectedJenis.value}`,
         {},
         {
             preserveState: true,
@@ -60,7 +62,7 @@ const updateFilter = () => {
     );
 };
 
-watch([selectedBulan, selectedTahun], updateFilter);
+watch([selectedBulan, selectedTahun, selectedJenis], updateFilter);
 
 const getSummaryTextColor = (pctStr: string) => {
     const pct = parseFloat(pctStr.replace('%', ''));
@@ -72,13 +74,13 @@ const getSummaryTextColor = (pctStr: string) => {
 </script>
 
 <template>
-    <Head title="Laporan Scan Perbulan" />
+    <Head title="Laporan Scan" />
 
     <div class="flex flex-col gap-4 p-4 md:p-8 pt-4">
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
             <div>
                 <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 uppercase italic">
-                    Laporan Scan Perbulan
+                    Laporan Scan
                 </h1>
                 <p class="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">
                     Rekapitulasi Target vs Actual per Proses per Hari
@@ -86,8 +88,18 @@ const getSummaryTextColor = (pctStr: string) => {
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <div class="flex items-center gap-2">
-                    <Select v-model="selectedBulan">
+            <div class="flex items-center gap-2">
+                <Select v-model="selectedJenis">
+                    <SelectTrigger class="w-32 h-9 text-xs">
+                        <SelectValue placeholder="Jenis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua</SelectItem>
+                        <SelectItem value="body">Body</SelectItem>
+                        <SelectItem value="tangki">Tangki</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select v-model="selectedBulan">
                         <SelectTrigger class="w-36 h-9 text-xs">
                             <SelectValue placeholder="Bulan" />
                         </SelectTrigger>

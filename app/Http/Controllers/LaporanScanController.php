@@ -9,13 +9,20 @@ use App\Models\Proses;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-class LaporanScanPerbulanController extends Controller
+class LaporanScanController extends Controller
 {
     public function index(Request $request)
     {
         $now = now();
         $bulan = (int) ($request->bulan ?? $now->month);
         $tahun = (int) ($request->tahun ?? $now->year);
+
+        $jenis = $request->jenis;
+        $jenisLabel = match ($jenis) {
+            'body' => 'Body',
+            'tangki' => 'Tangki',
+            default => null,
+        };
 
         // Daftar proses aktif (urutkan by urutan)
         $prosesList = Proses::where('is_active', true)
@@ -29,10 +36,11 @@ class LaporanScanPerbulanController extends Controller
         $actualRows = PengerjaanProduk::query()
             ->whereMonth('created_at', $bulan)
             ->whereYear('created_at', $tahun)
+            ->when($jenisLabel, fn ($q) => $q->whereHas('sesiKerja', fn ($q2) => $q2->where('jenis', $jenisLabel)))
             ->select(
                 DB::raw('DATE(created_at) as tanggal'),
                 'proses_id',
-                DB::raw('count(*) as actual')
+                DB::raw('COUNT(DISTINCT produk_id, proses_id) as actual')
             )
             ->groupBy('tanggal', 'proses_id')
             ->get()
@@ -45,6 +53,7 @@ class LaporanScanPerbulanController extends Controller
             ->whereMonth('tanggal_masuk', $bulan)
             ->whereYear('tanggal_masuk', $tahun)
             ->whereNotNull('target')
+            ->when($jenisLabel, fn ($q) => $q->where('jenis', $jenisLabel))
             ->select(
                 'tanggal_masuk',
                 'proses_id',
@@ -93,10 +102,12 @@ class LaporanScanPerbulanController extends Controller
         }
 
         // Tahun list untuk dropdown
-        $minYear = (int) (PengerjaanProduk::min(DB::raw('YEAR(created_at)')) ?? $now->year);
+        $minYearQuery = PengerjaanProduk::query()
+            ->when($jenisLabel, fn ($q) => $q->whereHas('sesiKerja', fn ($q2) => $q2->where('jenis', $jenisLabel)));
+        $minYear = (int) ($minYearQuery->min(DB::raw('YEAR(created_at)')) ?? $now->year);
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
-        return Inertia::render('LaporanScanPerbulan/Index', [
+        return Inertia::render('LaporanScan/Index', [
             'rows' => $rows,
             'prosesList' => $prosesList->pluck('proses')->all(),
             'summary' => [
@@ -107,6 +118,7 @@ class LaporanScanPerbulanController extends Controller
             'filter' => [
                 'bulan' => $bulan,
                 'tahun' => $tahun,
+                'jenis' => $jenisLabel,
                 'daftar_bulan' => [
                     1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
                     5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
