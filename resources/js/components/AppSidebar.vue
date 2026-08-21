@@ -21,6 +21,7 @@ import {
     IconScan,
     IconUserCheck,
     IconFileAnalytics,
+    IconTrash,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -97,6 +98,13 @@ const filteredNavMain = computed(() => {
         url: route("laporan.kualitas"),
         icon: IconPalette,
         root: "LaporanKualitas",
+    });
+
+    menus.push({
+        title: "Laporan Produk Buang",
+        url: route("laporan.produk.buang"),
+        icon: IconTrash,
+        root: "LaporanProdukBuang",
     });
 
     menus.push({

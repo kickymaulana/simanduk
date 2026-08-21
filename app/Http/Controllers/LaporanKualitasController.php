@@ -26,7 +26,10 @@ class LaporanKualitasController extends Controller
 
         $lastDay = (int) $now->copy()->month($bulan)->year($tahun)->endOfMonth()->format('d');
 
-        $kualitasList = Kualitas::orderBy('id')->get(['id', 'kualitas']);
+        $urutanKualitas = ['FG(EXPORT)', 'AB (DYNA / RAPTOR)', 'SG (HIU)', 'KW3 (BUANG)'];
+        $kualitasList = Kualitas::all(['id', 'kualitas'])
+            ->sortBy(fn ($k) => array_search($k->kualitas, $urutanKualitas) !== false ? array_search($k->kualitas, $urutanKualitas) : 99)
+            ->values();
         $warnaList = Warna::orderBy('id')->get(['id', 'warna']);
 
         $base = fn ($col) => Produk::query()
