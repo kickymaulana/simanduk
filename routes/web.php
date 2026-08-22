@@ -148,6 +148,7 @@ Route::middleware('auth')->group(function () {
     Route::get('log-temuan-reject', [LogTemuanRejectController::class, 'index'])->name('log.temuan.reject');
 
     Route::get('produk/{id}', [ProdukController::class, 'show'])->name('produk.show');
+    Route::post('produk/{produk}/fix-jenis', [ProdukController::class, 'fixJenis'])->name('produk.fix_jenis');
     Route::get('produk', [ProdukController::class, 'dataprodukindex'])->name('produk.index');
 
     Route::get('proses-produksi', [ProsesProduksiController::class, 'index'])->name('proses.produksi');

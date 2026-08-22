@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
                 'scan_qr' => $request->session()->get('scan_qr'),
                 'scan_mode' => $request->session()->get('scan_mode'),
+                'fix_jenis' => $request->session()->get('fix_jenis'),
             ],
         ];
     }

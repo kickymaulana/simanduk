@@ -68,6 +68,7 @@ class ScanController extends Controller
             'asal_slip'   => 'required|string',
             'is_sample'   => 'sometimes|boolean',
             'kode_sampel' => 'required_if:is_sample,1|nullable|string|max:255',
+            'jenis'       => 'required|in:Body,Tangki',
         ], [
             'qr.unique'       => 'QR Code ini sudah terdaftar.',
             'qr.size'         => 'QR Code harus tepat 10 karakter.',
@@ -76,6 +77,7 @@ class ScanController extends Controller
             'nomor_mould.required' => 'Pilih nomor mould!',
             'asal_slip.required'   => 'Pilih asal slip!',
             'kode_sampel.required_if' => 'Kode sampel wajib diisi saat produk ditandai sampel!',
+            'jenis.required' => 'Pilih jenis produk (Body/Tangki)!',
         ]);
 
         $sesi = $this->sesiAktif();
@@ -91,7 +93,7 @@ class ScanController extends Controller
                 $produk = Produk::create([
                     'qrcode'     => $qr,
                     'nama'       => 'Sample ' . $qr,
-                    'jenis'      => $sesi->jenis,
+                    'jenis'      => $validated['jenis'],
                     'status_akhir' => 'OK',
                     'sudah_scan' => 'Sudah',
                     'proses_id'  => $sesi->proses_id,
@@ -267,6 +269,18 @@ class ScanController extends Controller
 
         if (! $produk) {
             return back()->withErrors(['qr' => "Produk {$request->qr} tidak ditemukan di sistem!"]);
+        }
+
+        // Jenis produk harus sesuai jenis sesi aktif
+        if ($produk->jenis !== $sesi->jenis) {
+            return back()
+                ->withErrors(['jenis_mismatch' => "Jenis produk {$request->qr} ({$produk->jenis}) tidak sesuai sesi {$sesi->jenis}. Ubah jenis produk untuk lanjut scan."])
+                ->with('fix_jenis', [
+                    'produk_id'  => $produk->id,
+                    'qrcode'     => $produk->qrcode,
+                    'jenis'      => $produk->jenis,
+                    'sesi_jenis' => $sesi->jenis,
+                ]);
         }
 
         // Produk yang sudah BUANG bersifat final — tidak boleh diproses lagi

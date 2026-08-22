@@ -67,7 +67,7 @@ class ScanTanpaTroliTest extends TestCase
 
         Auth::login($leader);
         session(['sesi_kerja_id' => $sesi->id]);
-        $this->callScan('awal_store', ['qr' => 'DN00001234', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1']);
+        $this->callScan('awal_store', ['qr' => 'DN00001234', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1', 'jenis' => 'Body']);
 
         $this->assertDatabaseHas('produk', ['qrcode' => 'DN00001234', 'proses_id' => $sesi->proses_id, 'sudah_scan' => 'Sudah']);
         $this->assertDatabaseHas('pengerjaan_produk', ['produk_id' => 1, 'user_id' => $leader->id]);
@@ -79,7 +79,7 @@ class ScanTanpaTroliTest extends TestCase
         $data = $this->setupData();
         Auth::login($data['leader']);
 
-        $this->callScan('awal_store', ['qr' => 'DN00009999', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1']);
+        $this->callScan('awal_store', ['qr' => 'DN00009999', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1', 'jenis' => 'Body']);
 
         $this->assertDatabaseMissing('produk', ['qrcode' => 'DN00009999']);
         $this->assertNotNull(session('errors'));
@@ -92,7 +92,7 @@ class ScanTanpaTroliTest extends TestCase
         Auth::login($data['leader']);
         session(['sesi_kerja_id' => $data['sesi']->id]);
 
-        $this->callScan('awal_store', ['qr' => 'DN00005678', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1']);
+        $this->callScan('awal_store', ['qr' => 'DN00005678', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1', 'jenis' => 'Body']);
 
         // Reset sudah_scan agar bisa di-scan lagi sebagai validasi (simulasi pindah proses tidak di sini)
         \App\Models\Produk::where('qrcode', 'DN00005678')->update(['sudah_scan' => 'Belum']);
@@ -129,7 +129,7 @@ class ScanTanpaTroliTest extends TestCase
         Auth::login($data['leader']);
         session(['sesi_kerja_id' => $data['sesi']->id]);
 
-        $this->callScan('awal_store', ['qr' => 'DN00007777', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1']);
+        $this->callScan('awal_store', ['qr' => 'DN00007777', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1', 'jenis' => 'Body']);
 
         $this->assertTrue(PengerjaanProduk::where('produk_id', 1)->count() >= 2);
     }

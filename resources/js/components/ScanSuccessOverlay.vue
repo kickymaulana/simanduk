@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, computed, onBeforeUnmount } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { ref, watch, onBeforeUnmount } from "vue";
+import { usePage, router } from "@inertiajs/vue3";
 
 const page = usePage();
 
@@ -10,6 +10,11 @@ const qr = ref("");
 const mode = ref("");
 const counter = ref(0);
 const message = ref("");
+
+const fixState = ref<null | { produk_id: number; qrcode: string; jenis: string; sesi_jenis: string }>(null);
+const fixJenis = ref("Body");
+const fixSubmitting = ref(false);
+
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 const hide = () => {
@@ -17,11 +22,42 @@ const hide = () => {
     if (timer) clearTimeout(timer);
 };
 
+const submitFixJenis = () => {
+    if (!fixState.value || fixSubmitting.value) return;
+    fixSubmitting.value = true;
+    router.post(route("produk.fix_jenis", { produk: fixState.value.produk_id }), {
+        jenis: fixJenis.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            fixState.value = null;
+            hide();
+        },
+        onFinish: () => {
+            fixSubmitting.value = false;
+        },
+    });
+};
+
+const cancelFixJenis = () => {
+    fixState.value = null;
+    hide();
+};
+
 // Sukses scan → muncul dari flash.scan_qr
 watch(
     () => (page.props as any).flash,
     (flash: any) => {
+        if (flash?.fix_jenis) {
+            fixState.value = flash.fix_jenis;
+            fixJenis.value = flash.fix_jenis.jenis;
+            show.value = true;
+            if (timer) clearTimeout(timer);
+            return;
+        }
+
         if (flash?.scan_qr) {
+            fixState.value = null;
             isError.value = false;
             qr.value = flash.scan_qr;
             mode.value = flash.scan_mode || "Berhasil";
@@ -39,6 +75,8 @@ watch(
 watch(
     () => (page.props as any).errors,
     (errors: any) => {
+        if (fixState.value) return;
+
         const err = errors?.qr || errors?.error;
         if (err && page.url.includes("/scan/")) {
             isError.value = true;
@@ -72,33 +110,87 @@ onBeforeUnmount(() => {
             class="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
         >
             <div class="bg-white rounded-3xl shadow-2xl px-12 py-10 text-center relative animate-in zoom-in duration-300">
+                <!-- Form perbaikan jenis (mismatch) -->
+                <template v-if="fixState">
+                    <div class="swal-icon swal-error relative mx-auto size-20 mb-4">
+                        <span class="swal-x-mark">
+                            <span class="swal-line swal-line-left"></span>
+                            <span class="swal-line swal-line-right"></span>
+                        </span>
+                        <div class="swal-placeholder rounded-full"></div>
+                    </div>
+
+                    <div class="flex flex-col gap-1 mb-6">
+                        <h1 class="text-4xl font-black uppercase tracking-tight text-red-600">Jenis Tidak Sesuai</h1>
+                        <p class="font-mono text-2xl font-bold tracking-widest text-slate-800">{{ fixState.qrcode }}</p>
+                        <p class="text-base font-semibold text-red-500">
+                            Produk <b>{{ fixState.jenis }}</b> tapi sesi <b>{{ fixState.sesi_jenis }}</b>.
+                            Ubah jenis produk agar bisa discan.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col items-center gap-3">
+                        <select
+                            v-model="fixJenis"
+                            :disabled="fixSubmitting"
+                            class="w-48 rounded-md border-slate-300 px-3 py-2 text-sm font-semibold"
+                        >
+                            <option value="Body">Body</option>
+                            <option value="Tangki">Tangki</option>
+                        </select>
+
+                        <div class="flex gap-2">
+                            <button
+                                type="button"
+                                @click="submitFixJenis"
+                                :disabled="fixSubmitting"
+                                class="px-6 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {{ fixSubmitting ? "Menyimpan..." : "Simpan & Rescan" }}
+                            </button>
+                            <button
+                                type="button"
+                                @click="cancelFixJenis"
+                                :disabled="fixSubmitting"
+                                class="px-6 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
                 <!-- SweetAlert2-style checkmark (sukses) -->
-                <div v-if="!isError" class="swal-icon swal-success relative mx-auto size-20 mb-4">
-                    <span class="swal-line swal-line-tip"></span>
-                    <span class="swal-line swal-line-long"></span>
-                    <div class="swal-placeholder rounded-full"></div>
-                </div>
+                <template v-else-if="!isError">
+                    <div class="swal-icon swal-success relative mx-auto size-20 mb-4">
+                        <span class="swal-line swal-line-tip"></span>
+                        <span class="swal-line swal-line-long"></span>
+                        <div class="swal-placeholder rounded-full"></div>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <h1 class="text-4xl font-black uppercase tracking-tight text-green-600">{{ mode }}</h1>
+                        <p v-if="qr" class="font-mono text-2xl font-bold tracking-widest text-slate-800">{{ qr }}</p>
+                        <p class="text-base font-semibold text-slate-500">Scan ke-{{ counter }} (sesi ini)</p>
+                    </div>
+                </template>
 
                 <!-- SweetAlert2-style error (gagal) -->
-                <div v-else class="swal-icon swal-error relative mx-auto size-20 mb-4">
-                    <span class="swal-x-mark">
-                        <span class="swal-line swal-line-left"></span>
-                        <span class="swal-line swal-line-right"></span>
-                    </span>
-                    <div class="swal-placeholder rounded-full"></div>
-                </div>
+                <template v-else>
+                    <div class="swal-icon swal-error relative mx-auto size-20 mb-4">
+                        <span class="swal-x-mark">
+                            <span class="swal-line swal-line-left"></span>
+                            <span class="swal-line swal-line-right"></span>
+                        </span>
+                        <div class="swal-placeholder rounded-full"></div>
+                    </div>
 
-                <div class="flex flex-col gap-1">
-                    <h1 class="text-4xl font-black uppercase tracking-tight" :class="isError ? 'text-red-600' : 'text-green-600'">
-                        {{ isError ? "Gagal" : mode }}
-                    </h1>
-                    <p v-if="qr" class="font-mono text-2xl font-bold tracking-widest text-slate-800">
-                        {{ qr }}
-                    </p>
-                    <p class="text-base font-semibold" :class="isError ? 'text-red-500' : 'text-slate-500'">
-                        {{ isError ? message : `Scan ke-${counter} (sesi ini)` }}
-                    </p>
-                </div>
+                    <div class="flex flex-col gap-1">
+                        <h1 class="text-4xl font-black uppercase tracking-tight text-red-600">Gagal</h1>
+                        <p v-if="qr" class="font-mono text-2xl font-bold tracking-widest text-slate-800">{{ qr }}</p>
+                        <p class="text-base font-semibold text-red-500">{{ message }}</p>
+                    </div>
+                </template>
             </div>
         </div>
     </Transition>

@@ -21,6 +21,7 @@ const form = useForm({
     asal_slip: "",
     is_sample: false,
     kode_sampel: "",
+    jenis: props.sesi?.jenis ?? "Body",
 });
 
 const listMesin = ["Mesin 01", "Mesin 02"];
@@ -115,6 +116,14 @@ defineOptions({ layout: AuthenticatedLayout });
 
             <CardContent class="space-y-6 py-6">
                 <div class="grid grid-cols-1 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Jenis Produk</label>
+                        <select v-model="form.jenis" @change="focusScanner" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
+                            <option value="Body">Body</option>
+                            <option value="Tangki">Tangki</option>
+                        </select>
+                        <p v-if="form.errors.jenis" class="text-[10px] text-red-600 font-semibold">{{ form.errors.jenis }}</p>
+                    </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Mesin</label>

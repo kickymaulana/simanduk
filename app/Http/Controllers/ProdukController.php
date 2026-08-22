@@ -8,6 +8,16 @@ use Inertia\Inertia;
 
 class ProdukController extends Controller
 {
+    public function fixJenis(Request $request, Produk $produk)
+    {
+        $validated = $request->validate([
+            'jenis' => 'required|in:Body,Tangki',
+        ]);
+
+        $produk->update(['jenis' => $validated['jenis']]);
+
+        return back()->with('success', "Jenis produk {$produk->qrcode} diubah menjadi {$validated['jenis']}.");
+    }
     public function show($id)
     {
         $produk = Produk::with([
