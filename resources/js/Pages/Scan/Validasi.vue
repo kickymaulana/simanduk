@@ -12,15 +12,20 @@ import {
     IconCheck,
     IconShieldCheck,
     IconClock,
+    IconFlame,
 } from "@tabler/icons-vue";
 
 const props = defineProps<{
     sesi: any;
+    daftar_oven?: Array<{ id: number; oven: string }>;
 }>();
 
 const nativeInput = ref<HTMLInputElement | null>(null);
 
-const form = useForm({ qr: "" });
+const form = useForm({
+    qr: "",
+    oven_id: null as number | null,
+});
 
 const focusInput = (attempt = 0) => {
     if (nativeInput.value) {
@@ -49,7 +54,7 @@ const handleScan = () => {
     form.post(route("scan.validasi_store"), {
         preserveScroll: true,
         onSuccess: () => {
-            form.reset();
+            form.reset("qr");
             focusInput();
         },
         onError: (errors) => {
@@ -111,6 +116,16 @@ defineOptions({ layout: AuthenticatedLayout });
                             <IconCheck class="size-5" />
                         </div>
                     </div>
+                </div>
+
+                <div v-if="sesi?.proses?.proses === 'Oven Susun'" class="space-y-1 w-full max-w-xs mx-auto">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase flex items-center justify-center gap-1">
+                        <IconFlame class="size-3" /> Pilih Oven (opsional)
+                    </label>
+                    <select v-model="form.oven_id" @change="focusInput" class="w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:text-white">
+                        <option :value="null">— Pilih Oven —</option>
+                        <option v-for="o in props.daftar_oven" :key="o.id" :value="o.id">{{ o.oven }}</option>
+                    </select>
                 </div>
 
                 <div class="space-y-4 text-center">

@@ -40,4 +40,9 @@ class Produk extends Model
         return $this->belongsTo(Warna::class, 'warna_id');
     }
 
+    public function oven(): BelongsTo
+    {
+        return $this->belongsTo(Oven::class, 'oven_id');
+    }
+
 }

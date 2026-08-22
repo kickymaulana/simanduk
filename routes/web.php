@@ -15,6 +15,7 @@ use App\Http\Controllers\SesiKerjaController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\QrBelumDiscanController;
 use App\Http\Controllers\Master\ProsesController;
+use App\Http\Controllers\Master\OvenController;
 use App\Http\Controllers\Master\ShiftController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\RiwayatScanMasukController;
@@ -60,6 +61,13 @@ Route::middleware('auth', 'role:admin')->group(function () {
     Route::get('master/shifts/{shift}/edit', [ShiftController::class, 'edit'])->name('shifts.edit');
     Route::put('master/shifts/{shift}', [ShiftController::class, 'update'])->name('shifts.update');
     Route::delete('master/shifts/{shift}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
+
+    Route::get('master/ovens', [OvenController::class, 'index'])->name('ovens.index');
+    Route::get('master/ovens/create', [OvenController::class, 'create'])->name('ovens.create');
+    Route::post('master/ovens/create', [OvenController::class, 'store'])->name('ovens.store');
+    Route::get('master/ovens/{oven}/edit', [OvenController::class, 'edit'])->name('ovens.edit');
+    Route::put('master/ovens/{oven}', [OvenController::class, 'update'])->name('ovens.update');
+    Route::delete('master/ovens/{oven}', [OvenController::class, 'destroy'])->name('ovens.destroy');
 
     Route::get('master/roles', [RoleController::class, 'index'])->name('roles.index');
     Route::get('master/roles/create', [RoleController::class, 'create'])->name('roles.create');

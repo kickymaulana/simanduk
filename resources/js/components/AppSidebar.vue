@@ -22,6 +22,7 @@ import {
     IconUserCheck,
     IconFileAnalytics,
     IconTrash,
+    IconFlame,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -171,6 +172,12 @@ const masterData = [
         url: route("shifts.index"),
         icon: IconClock,
         root: "Master/Shifts",
+    },
+    {
+        name: "Oven",
+        url: route("ovens.index"),
+        icon: IconFlame,
+        root: "Master/Ovens",
     },
     {
         name: "Departemen",

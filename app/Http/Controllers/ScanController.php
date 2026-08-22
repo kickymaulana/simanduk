@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AturanPenolakan;
 use App\Models\Cacat;
 use App\Models\Kualitas;
+use App\Models\Oven;
 use App\Models\PengerjaanProduk;
 use App\Models\Produk;
 use App\Models\SesiKerja;
@@ -119,13 +120,24 @@ class ScanController extends Controller
 
     public function validasi()
     {
-        return $this->renderScan('Scan/Validasi');
+        return $this->renderScan('Scan/Validasi', [
+            'daftar_oven' => Oven::orderBy('oven')->get(['id', 'oven']),
+        ]);
     }
 
     public function validasi_store(Request $request)
     {
-        return $this->prosesScan($request, 'OK', function (Produk $produk, SesiKerja $sesi) {
-            $produk->update(['sudah_scan' => 'Sudah', 'status_akhir' => 'OK', 'proses_id' => $sesi->proses_id]);
+        $request->validate([
+            'oven_id' => 'nullable|exists:oven,id',
+        ]);
+
+        return $this->prosesScan($request, 'OK', function (Produk $produk, SesiKerja $sesi) use ($request) {
+            $produk->update([
+                'sudah_scan' => 'Sudah',
+                'status_akhir' => 'OK',
+                'proses_id' => $sesi->proses_id,
+                'oven_id' => $request->oven_id,
+            ]);
         });
     }
 
