@@ -28,7 +28,14 @@ const props = defineProps<{
         data: Array<{
             id: number;
             id_pengerjaan_cacat: number;
-            pengerjaan_produk: { produk: { nama_produk: string } };
+            pengerjaan_produk: {
+                produk: {
+                    qrcode: string;
+                    jenis: string;
+                    kualitas: { kualitas: string } | null;
+                    warna: { warna: string } | null;
+                };
+            };
             master_cacat: { cacat: string };
             user_scan_id: number;
             created_at: string;
@@ -48,7 +55,7 @@ watch(search, (value) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
         router.get(
-            route("log.temuan.reject"),
+            route("temuan.reject.qc"),
             { search: value },
             { preserveState: true, replace: true },
         );
@@ -77,7 +84,7 @@ const formatDate = (dateString: string) => {
 </script>
 
 <template>
-    <Head title="Log Temuan Reject" />
+    <Head title="Temuan Reject QC" />
 
     <div class="flex flex-col gap-4 p-4 md:p-8 pt-4">
         <Card class="border-none shadow-sm">
@@ -86,7 +93,7 @@ const formatDate = (dateString: string) => {
             >
                 <CardTitle class="text-xl font-bold flex items-center gap-2">
                     <IconClipboardList class="size-6 text-primary" />
-                    Log Temuan Reject
+                    Temuan Reject QC
                 </CardTitle>
 
                 <div class="flex items-center gap-2 w-full md:w-auto">
@@ -118,6 +125,8 @@ const formatDate = (dateString: string) => {
                                 <TableHead class="w-16">ID</TableHead>
                                 <TableHead>Waktu Scan</TableHead>
                                 <TableHead>Produk</TableHead>
+                                <TableHead>Jenis</TableHead>
+                                <TableHead>Kualitas</TableHead>
                                 <TableHead>Jenis Cacat</TableHead>
                                 <TableHead>Penemu</TableHead>
                                 <TableHead>Proses</TableHead>
@@ -129,7 +138,7 @@ const formatDate = (dateString: string) => {
                         <TableBody>
                             <TableRow v-if="logs.data.length === 0">
                                 <TableCell
-                                    colspan="5"
+                                    colspan="11"
                                     class="h-24 text-center text-muted-foreground italic"
                                 >
                                     Tidak ada riwayat temuan reject.
@@ -149,6 +158,14 @@ const formatDate = (dateString: string) => {
                                 </TableCell>
                                 <TableCell class="font-semibold">
                                     {{ item.pengerjaan_produk?.produk?.qrcode || 'N/A' }}
+                                </TableCell>
+                                <TableCell class="text-sm">
+                                    <Badge variant="outline" :class="item.pengerjaan_produk?.produk?.jenis === 'Tangki' ? 'text-orange-600 border-orange-200' : 'text-blue-600 border-blue-200'">
+                                        {{ item.pengerjaan_produk?.produk?.jenis || '-' }}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell class="text-sm">
+                                    {{ item.pengerjaan_produk?.produk?.kualitas?.kualitas || '-' }}
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="destructive" class="font-medium">

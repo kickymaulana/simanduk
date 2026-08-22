@@ -108,10 +108,10 @@ const filteredNavMain = computed(() => {
     });
 
     menus.push({
-        title: "Log Temuan Reject",
-        url: route("log.temuan.reject"),
+        title: "Temuan Reject QC",
+        url: route("temuan.reject.qc"),
         icon: IconClipboardList,
-        root: "LogTemuanReject",
+        root: "TemuanRejectQc",
     });
 
     menus.push({

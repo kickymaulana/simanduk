@@ -19,7 +19,7 @@ use App\Http\Controllers\Master\ShiftController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\RiwayatScanMasukController;
 use App\Http\Controllers\TotalPengerjaanUserController;
-use App\Http\Controllers\LogTemuanRejectController;
+use App\Http\Controllers\TemuanRejectQcController;
 use App\Http\Controllers\ProsesProduksiController;
 use App\Http\Controllers\StokController;
 use App\Http\Controllers\LaporanKualitasController;
@@ -145,7 +145,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('riwayat-scan-masuk', [RiwayatScanMasukController::class, 'index'])->name('riwayat.scan.masuk');
     Route::get('total-pengerjaan-user', [TotalPengerjaanUserController::class, 'index'])->name('total.pengerjaan.user');
-    Route::get('log-temuan-reject', [LogTemuanRejectController::class, 'index'])->name('log.temuan.reject');
+    Route::get('temuan-reject-qc', [TemuanRejectQcController::class, 'index'])->name('temuan.reject.qc');
 
     Route::get('produk/{id}', [ProdukController::class, 'show'])->name('produk.show');
     Route::post('produk/{produk}/fix-jenis', [ProdukController::class, 'fixJenis'])->name('produk.fix_jenis');

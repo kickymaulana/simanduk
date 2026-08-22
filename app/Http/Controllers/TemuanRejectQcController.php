@@ -6,14 +6,16 @@ use Illuminate\Http\Request;
 use App\Models\PengerjaanCacat;
 use Inertia\Inertia;
 
-class LogTemuanRejectController extends Controller
+class TemuanRejectQcController extends Controller
 {
     public function index(Request $request)
     {
         $logs = PengerjaanCacat::query()
+            ->whereHas('user_scan', fn ($q) => $q->whereHas('departemen', fn ($d) => $d->where('departemen', 'QC')))
             ->with([
                 'cacat',
-                'pengerjaan_produk.produk',
+                'pengerjaan_produk.produk.kualitas',
+                'pengerjaan_produk.produk.warna',
                 'user_scan', // Pastikan relasi ini ada di model PengerjaanCacat
                 'user_pj', // Pastikan relasi ini ada di model PengerjaanCacat
                 'proses_pj', // Pastikan relasi ini ada di model PengerjaanCacat
@@ -45,7 +47,7 @@ class LogTemuanRejectController extends Controller
             'created_at' => $log->created_at->translatedFormat('d M Y, H:i'),
         ]);
 
-        return Inertia::render('LogTemuanReject/Index', [
+        return Inertia::render('TemuanRejectQc/Index', [
             'logs' => $logs,
             'filters' => $request->only(['search'])
         ]);
