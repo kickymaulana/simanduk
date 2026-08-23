@@ -23,6 +23,7 @@ import {
     IconFileAnalytics,
     IconTrash,
     IconFlame,
+    IconTractor,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -106,6 +107,20 @@ const filteredNavMain = computed(() => {
         url: route("laporan.produk.buang"),
         icon: IconTrash,
         root: "LaporanProdukBuang",
+    });
+
+    menus.push({
+        title: "Laporan Trace Operator",
+        url: route("laporan.trace.operator"),
+        icon: IconUsers,
+        root: "LaporanTrace",
+    });
+
+    menus.push({
+        title: "Laporan Trace Mesin",
+        url: route("laporan.trace.mesin"),
+        icon: IconTractor,
+        root: "LaporanTrace",
     });
 
     menus.push({

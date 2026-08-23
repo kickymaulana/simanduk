@@ -26,6 +26,7 @@ use App\Http\Controllers\StokController;
 use App\Http\Controllers\LaporanKualitasController;
 use App\Http\Controllers\LaporanProdukBuangController;
 use App\Http\Controllers\LaporanScanController;
+use App\Http\Controllers\LaporanTraceController;
 use App\Http\Controllers\Master\KualitasController;
 use App\Http\Controllers\Master\WarnaController;
 use App\Http\Controllers\PeriksaController;
@@ -173,4 +174,7 @@ Route::middleware('auth')->group(function () {
     Route::get('laporan-kualitas', [LaporanKualitasController::class, 'index'])->name('laporan.kualitas');
 
     Route::get('laporan-produk-buang', [LaporanProdukBuangController::class, 'index'])->name('laporan.produk.buang');
+
+    Route::get('laporan-trace-operator', [LaporanTraceController::class, 'operator'])->name('laporan.trace.operator');
+    Route::get('laporan-trace-mesin', [LaporanTraceController::class, 'mesin'])->name('laporan.trace.mesin');
 });
