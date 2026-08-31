@@ -31,6 +31,7 @@ use App\Http\Controllers\Master\KualitasController;
 use App\Http\Controllers\Master\WarnaController;
 use App\Http\Controllers\PeriksaController;
 use App\Http\Controllers\KoreksiScanController;
+use App\Http\Controllers\SettingController;
 
 
 
@@ -123,6 +124,9 @@ Route::middleware('auth', 'role:admin')->group(function () {
     Route::get('koreksi-scan', [KoreksiScanController::class, 'index'])->name('koreksi.scan');
     Route::post('koreksi-scan/cari', [KoreksiScanController::class, 'cari'])->name('koreksi.scan.cari');
     Route::post('koreksi-scan/{produk}/batalkan', [KoreksiScanController::class, 'batalkan'])->name('koreksi.scan.batalkan');
+
+    Route::get('pengaturan', [SettingController::class, 'index'])->name('pengaturan');
+    Route::post('pengaturan/toggle-cek-urutan', [SettingController::class, 'toggleCekUrutan'])->name('pengaturan.toggle_cek_urutan');
 });
 
 Route::middleware('auth')->group(function () {

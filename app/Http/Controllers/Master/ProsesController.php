@@ -45,16 +45,19 @@ class ProsesController extends Controller
             'departemen_id' => 'required|exists:departemen,id',
             'proses'        => 'required|string|max:255',
             'urutan'        => 'required|integer|min:1',
+            'jenis'         => 'nullable|in:Body,Tangki',
         ], [
             'departemen_id.required' => 'Departemen wajib dipilih.',
             'proses.required'        => 'Nama proses wajib diisi.',
             'urutan.required'        => 'Urutan wajib diisi.',
+            'jenis.in'               => 'Jenis harus Body atau Tangki.',
         ]);
 
         Proses::create([
             'departemen_id' => $request->departemen_id,
             'proses'        => $request->proses,
             'urutan'        => $request->urutan,
+            'jenis'         => $request->jenis ?: null,
         ]);
 
         return redirect()->route('proses.index')->with('message', 'Proses berhasil ditambahkan.');
@@ -74,12 +77,14 @@ class ProsesController extends Controller
             'departemen_id' => 'required|exists:departemen,id',
             'proses'        => 'required|string|max:255',
             'urutan'        => 'required|integer|min:1',
+            'jenis'         => 'nullable|in:Body,Tangki',
         ]);
 
         $proses->update([
             'departemen_id' => $request->departemen_id,
             'proses'        => $request->proses,
             'urutan'        => $request->urutan,
+            'jenis'         => $request->jenis ?: null,
         ]);
 
         return redirect()->route('proses.index')->with('message', 'Data proses berhasil diperbarui.');

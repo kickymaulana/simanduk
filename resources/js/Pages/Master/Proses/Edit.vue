@@ -27,6 +27,7 @@ const props = defineProps<{
         proses: string;
         urutan: number;
         departemen_id: number;
+        jenis: string | null;
     };
     departemens: Array<{ id: number; departemen: string }>;
 }>();
@@ -35,6 +36,7 @@ const form = useForm({
     departemen_id: props.proses.departemen_id,
     proses: props.proses.proses,
     urutan: props.proses.urutan,
+    jenis: props.proses.jenis ?? "",
 });
 
 const submit = () => {
@@ -136,6 +138,29 @@ const submit = () => {
                                     'border-destructive': form.errors.urutan,
                                 }"
                             />
+                        </div>
+
+<div class="grid gap-2">
+                            <Label for="jenis">Jenis Produk (opsional)</Label>
+                            <div class="relative">
+                                <select
+                                    id="jenis"
+                                    v-model="form.jenis"
+                                    class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring shadow-sm appearance-none"
+                                >
+                                    <option value="">
+                                        Semua (Body & Tangki)
+                                    </option>
+                                    <option value="Body">Body</option>
+                                    <option value="Tangki">Tangki</option>
+                                </select>
+                            </div>
+                            <p
+                                v-if="form.errors.jenis"
+                                class="text-sm text-destructive font-medium italic"
+                            >
+                                {{ form.errors.jenis }}
+                            </p>
                         </div>
 
                         <Button

@@ -33,6 +33,7 @@ const props = defineProps<{
             proses: string;
             urutan: number;
             is_active: boolean;
+            jenis: string | null;
             departemen: { departemen: string };
             created_at: string;
         }>;
@@ -123,6 +124,7 @@ const toggleActive = (id: number) => {
                                     >Urutan</TableHead
                                 >
                                 <TableHead>Nama Proses</TableHead>
+                                <TableHead>Jenis</TableHead>
                                 <TableHead>Departemen</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead class="text-right">Aksi</TableHead>
@@ -131,7 +133,7 @@ const toggleActive = (id: number) => {
                         <TableBody>
                             <TableRow v-if="proses.data.length === 0">
                                 <TableCell
-                                    colspan="5"
+                                    colspan="6"
                                     class="h-24 text-center text-muted-foreground italic"
                                 >
                                     Data proses tidak ditemukan.
@@ -157,6 +159,26 @@ const toggleActive = (id: number) => {
                                     class="font-bold tracking-wide text-primary"
                                 >
                                     {{ item.proses }}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge
+                                        v-if="item.jenis"
+                                        :class="
+                                            item.jenis === 'Body'
+                                                ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                                : 'bg-amber-100 text-amber-700 border-amber-200'
+                                        "
+                                        variant="outline"
+                                        class="font-bold"
+                                    >
+                                        {{ item.jenis }}
+                                    </Badge>
+                                    <span
+                                        v-else
+                                        class="text-xs text-muted-foreground font-medium"
+                                    >
+                                        Semua
+                                    </span>
                                 </TableCell>
                                 <TableCell>
                                     <div class="flex items-center gap-2">

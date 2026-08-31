@@ -25,6 +25,7 @@ import {
     IconFlame,
     IconTractor,
     IconArrowBackUp,
+    IconSettings,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -174,6 +175,13 @@ const filteredNavMain = computed(() => {
             url: route("koreksi.scan"),
             icon: IconArrowBackUp,
             root: "KoreksiScan",
+        });
+
+        menus.push({
+            title: "Pengaturan",
+            url: route("pengaturan"),
+            icon: IconSettings,
+            root: "Pengaturan",
         });
     }
 

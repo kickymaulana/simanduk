@@ -8,6 +8,7 @@ use App\Models\Kualitas;
 use App\Models\Oven;
 use App\Models\PengerjaanProduk;
 use App\Models\Produk;
+use App\Models\Proses;
 use App\Models\SesiKerja;
 use App\Models\Warna;
 use Illuminate\Http\Request;
@@ -300,6 +301,27 @@ class ScanController extends Controller
             return back()->withErrors(['qr' => "Produk {$request->qr} sudah berstatus BUANG dan tidak bisa diproses lagi!"]);
         }
 
+        // Cek urutan proses: semua proses aktif sebelumnya (jenis sesuai) harus sudah discan
+        if ($this->cekUrutanScanAktif()) {
+            $prevProses = Proses::where('is_active', true)
+                ->where('urutan', '<', $sesi->proses->urutan)
+                ->where(function ($q) use ($produk) {
+                    $q->whereNull('jenis')->orWhere('jenis', $produk->jenis);
+                })
+                ->orderBy('urutan')
+                ->get();
+
+            foreach ($prevProses as $prev) {
+                $sudah = PengerjaanProduk::where('produk_id', $produk->id)
+                    ->where('proses_id', $prev->id)
+                    ->exists();
+
+                if (! $sudah) {
+                    return back()->withErrors(['qr' => "Produk {$request->qr} belum discan di proses {$prev->proses}. Scan harus sesuai urutan proses!"]);
+                }
+            }
+        }
+
         // Cek scan terakhir di proses ini
         $existingScan = PengerjaanProduk::where('produk_id', $produk->id)
             ->where('proses_id', $sesi->proses_id)
@@ -423,5 +445,11 @@ class ScanController extends Controller
                 ->distinct()
                 ->get()
             : collect();
+    }
+
+    /** Fitur cek urutan scan aktif? (toggle di menu Pengaturan, admin) */
+    private function cekUrutanScanAktif(): bool
+    {
+        return DB::table('settings')->where('key', 'cek_urutan_scan')->value('value') === '1';
     }
 }
