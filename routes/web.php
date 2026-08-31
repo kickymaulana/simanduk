@@ -30,6 +30,7 @@ use App\Http\Controllers\LaporanTraceController;
 use App\Http\Controllers\Master\KualitasController;
 use App\Http\Controllers\Master\WarnaController;
 use App\Http\Controllers\PeriksaController;
+use App\Http\Controllers\KoreksiScanController;
 
 
 
@@ -118,6 +119,10 @@ Route::middleware('auth', 'role:admin')->group(function () {
     Route::get('master/warna/{warna}/edit', [WarnaController::class, 'edit'])->name('warna.edit');
     Route::put('master/warna/{warna}/edit', [WarnaController::class, 'update'])->name('warna.update');
     Route::delete('master/warna/{warna}', [WarnaController::class, 'destroy'])->name('warna.destroy');
+
+    Route::get('koreksi-scan', [KoreksiScanController::class, 'index'])->name('koreksi.scan');
+    Route::post('koreksi-scan/cari', [KoreksiScanController::class, 'cari'])->name('koreksi.scan.cari');
+    Route::post('koreksi-scan/{produk}/batalkan', [KoreksiScanController::class, 'batalkan'])->name('koreksi.scan.batalkan');
 });
 
 Route::middleware('auth')->group(function () {

@@ -24,6 +24,7 @@ import {
     IconTrash,
     IconFlame,
     IconTractor,
+    IconArrowBackUp,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -56,6 +57,8 @@ const isAdminOrQC = computed(() => {
         userRoles.value.includes("Quality Control")
     );
 });
+
+const isAdmin = computed(() => userRoles.value.includes("admin"));
 
 const filteredNavMain = computed(() => {
     let menus: any[] = [];
@@ -164,6 +167,15 @@ const filteredNavMain = computed(() => {
         icon: IconBoxSeam,
         root: "Stok",
     });
+
+    if (isAdmin.value) {
+        menus.push({
+            title: "Koreksi Scan",
+            url: route("koreksi.scan"),
+            icon: IconArrowBackUp,
+            root: "KoreksiScan",
+        });
+    }
 
     return menus;
 });
