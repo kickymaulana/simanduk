@@ -9,7 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     Select,
     SelectContent,
@@ -17,22 +17,40 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { IconPalette, IconCalendar } from "@tabler/icons-vue";
 import { ref, watch } from "vue";
 
 defineOptions({ layout: AuthenticatedLayout });
 
+type Row = {
+    tanggal: number;
+    jenis: string;
+    input: number;
+    fg: number;
+    ab: number;
+    sg: number;
+    reject: number;
+    fg_persen: string;
+    ab_persen: string;
+    sg_persen: string;
+    reject_persen: string;
+};
+
 const props = defineProps<{
-    rowsKualitas: Array<Record<string, number>>;
-    rowsWarna: Array<Record<string, number>>;
-    kualitasList: string[];
-    warnaList: string[];
-    summaryKualitas: Record<string, number>;
-    summaryWarna: Record<string, number>;
+    rows: Row[];
+    summary: {
+        input: number;
+        fg: number;
+        ab: number;
+        sg: number;
+        reject: number;
+        fg_persen: string;
+        ab_persen: string;
+        sg_persen: string;
+        reject_persen: string;
+    };
     filter: {
         bulan: number;
         tahun: number;
-        jenis: string | null;
         daftar_bulan: Record<number, string>;
         daftar_tahun: number[];
     };
@@ -40,20 +58,16 @@ const props = defineProps<{
 
 const selectedBulan = ref<number>(props.filter.bulan);
 const selectedTahun = ref<number>(props.filter.tahun);
-const selectedJenis = ref<string>(props.filter.jenis ?? "all");
 
 const updateFilter = () => {
     router.get(
-        `?bulan=${selectedBulan.value}&tahun=${selectedTahun.value}&jenis=${selectedJenis.value}`,
+        `?bulan=${selectedBulan.value}&tahun=${selectedTahun.value}`,
         {},
-        {
-            preserveState: true,
-            replace: true,
-        },
+        { preserveState: true, replace: true },
     );
 };
 
-watch([selectedBulan, selectedTahun, selectedJenis], updateFilter);
+watch([selectedBulan, selectedTahun], updateFilter);
 </script>
 
 <template>
@@ -63,24 +77,14 @@ watch([selectedBulan, selectedTahun, selectedJenis], updateFilter);
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 uppercase italic">
-                    Laporan Kualitas
+                    Total Hasil Checking Kloset Duduk
                 </h1>
                 <p class="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">
-                    Rekapitulasi Kualitas & Warna per Hari
+                    Proses QC Visual & Dimensi · Rekapitulasi Hasil Checking per Hari
                 </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <Select v-model="selectedJenis">
-                    <SelectTrigger class="w-32 h-9 text-xs">
-                        <SelectValue placeholder="Jenis" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Semua</SelectItem>
-                        <SelectItem value="body">Body</SelectItem>
-                        <SelectItem value="tangki">Tangki</SelectItem>
-                    </SelectContent>
-                </Select>
                 <Select v-model="selectedBulan">
                     <SelectTrigger class="w-36 h-9 text-xs">
                         <SelectValue placeholder="Bulan" />
@@ -105,89 +109,67 @@ watch([selectedBulan, selectedTahun, selectedJenis], updateFilter);
         </div>
 
         <Card class="border-none shadow-sm overflow-hidden">
-            <CardHeader class="pb-2">
-                <div class="flex items-center gap-2">
-                    <IconPalette class="size-4 text-primary" />
-                    <CardTitle class="text-xs font-black uppercase tracking-widest">
-                        Periode: {{ filter.daftar_bulan[filter.bulan] }} {{ filter.tahun }}
-                    </CardTitle>
-                </div>
-            </CardHeader>
-        </Card>
-
-        <Card class="border-none shadow-sm overflow-hidden">
-            <CardHeader class="pb-2">
-                <div class="flex items-center gap-2">
-                    <IconPalette class="size-4 text-primary" />
-                    <CardTitle class="text-xs font-black uppercase tracking-widest">Per Kualitas</CardTitle>
-                </div>
-            </CardHeader>
             <CardContent class="p-0">
                 <div class="overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow class="bg-slate-100 text-slate-700 text-xs font-bold border-b border-slate-300">
+                                <TableHead class="w-10 text-center border-r border-slate-300">No</TableHead>
                                 <TableHead class="w-16 text-center border-r border-slate-300">Tgl</TableHead>
-                                <TableHead v-for="k in kualitasList" :key="k" class="w-28 text-center border-r border-slate-300">
-                                    {{ k }}
-                                </TableHead>
+                                <TableHead class="w-20 text-left border-r border-slate-300 pl-3">Item</TableHead>
+                                <TableHead class="w-20 text-center border-r border-slate-300">Input/Pcs</TableHead>
+                                <TableHead colspan="4" class="text-center border-r border-slate-300 border-l border-slate-300">Hasil Checking (Pcs)</TableHead>
+                                <TableHead colspan="4" class="text-center">Hasil Checking (%)</TableHead>
+                            </TableRow>
+                            <TableRow class="bg-slate-50 text-slate-600 text-[10px] font-bold border-b border-slate-200">
+                                <TableHead colspan="3" class="border-r border-slate-200"></TableHead>
+                                <TableHead class="text-center border-r border-slate-200"></TableHead>
+                                <TableHead class="text-center border-r border-slate-200">FG</TableHead>
+                                <TableHead class="text-center border-r border-slate-200">AB</TableHead>
+                                <TableHead class="text-center border-r border-slate-200">SG</TableHead>
+                                <TableHead class="text-center border-r border-slate-200">Reject Buang</TableHead>
+                                <TableHead class="text-center border-r border-slate-200">FG%</TableHead>
+                                <TableHead class="text-center border-r border-slate-200">AB%</TableHead>
+                                <TableHead class="text-center border-r border-slate-200">SG%</TableHead>
+                                <TableHead class="text-center">Reject%</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="row in rowsKualitas" :key="row.tanggal" class="border-t border-slate-200">
+                            <TableRow v-for="row in rows" :key="row.tanggal + '-' + row.jenis" class="border-t border-slate-200">
+                                <TableCell class="w-10 text-center text-xs border-r border-slate-200"></TableCell>
                                 <TableCell class="w-16 text-center font-bold text-sm border-r border-slate-200">
                                     {{ row.tanggal }}
                                 </TableCell>
-                                <TableCell v-for="k in kualitasList" :key="k" class="w-28 text-center border-r border-slate-200">
-                                    <span class="text-xs font-mono font-medium">{{ row[k] ?? 0 }}</span>
+                                <TableCell class="w-20 text-left text-xs border-r border-slate-200 pl-3">
+                                    {{ row.jenis }}
                                 </TableCell>
-                            </TableRow>
-                            <TableRow class="font-bold text-xs border-t-2 border-slate-300 bg-slate-50">
-                                <TableCell class="w-16 border-r border-slate-300">Total</TableCell>
-                                <TableCell v-for="k in kualitasList" :key="k + '-s'" class="text-center text-blue-700 border-r border-slate-300">
-                                    {{ summaryKualitas[k] ?? 0 }}
+                                <TableCell class="w-20 text-center text-xs font-mono font-bold border-r border-slate-200">
+                                    {{ row.input }}
                                 </TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
-
-        <Card class="border-none shadow-sm overflow-hidden">
-            <CardHeader class="pb-2">
-                <div class="flex items-center gap-2">
-                    <IconCalendar class="size-4 text-primary" />
-                    <CardTitle class="text-xs font-black uppercase tracking-widest">Per Warna</CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent class="p-0">
-                <div class="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow class="bg-slate-100 text-slate-700 text-xs font-bold border-b border-slate-300">
-                                <TableHead class="w-16 text-center border-r border-slate-300">Tgl</TableHead>
-                                <TableHead v-for="w in warnaList" :key="w" class="w-24 text-center border-r border-slate-300">
-                                    {{ w }}
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            <TableRow v-for="row in rowsWarna" :key="row.tanggal" class="border-t border-slate-200">
-                                <TableCell class="w-16 text-center font-bold text-sm border-r border-slate-200">
-                                    {{ row.tanggal }}
-                                </TableCell>
-                                <TableCell v-for="w in warnaList" :key="w" class="w-24 text-center border-r border-slate-200">
-                                    <span class="text-xs font-mono font-medium">{{ row[w] ?? 0 }}</span>
-                                </TableCell>
-                            </TableRow>
-                            <TableRow class="font-bold text-xs border-t-2 border-slate-300 bg-slate-50">
-                                <TableCell class="w-16 border-r border-slate-300">Total</TableCell>
-                                <TableCell v-for="w in warnaList" :key="w + '-s'" class="text-center text-blue-700 border-r border-slate-300">
-                                    {{ summaryWarna[w] ?? 0 }}
-                                </TableCell>
+                                <TableCell class="text-center text-xs font-mono border-r border-slate-200">{{ row.fg }}</TableCell>
+                                <TableCell class="text-center text-xs font-mono border-r border-slate-200">{{ row.ab }}</TableCell>
+                                <TableCell class="text-center text-xs font-mono border-r border-slate-200">{{ row.sg }}</TableCell>
+                                <TableCell class="text-center text-xs font-mono border-r border-slate-200">{{ row.reject }}</TableCell>
+                                <TableCell class="text-center text-xs font-mono border-r border-slate-200">{{ row.fg_persen }}</TableCell>
+                                <TableCell class="text-center text-xs font-mono border-r border-slate-200">{{ row.ab_persen }}</TableCell>
+                                <TableCell class="text-center text-xs font-mono border-r border-slate-200">{{ row.sg_persen }}</TableCell>
+                                <TableCell class="text-center text-xs font-mono">{{ row.reject_persen }}</TableCell>
                             </TableRow>
                         </TableBody>
+                        <tfoot>
+                            <TableRow class="font-bold text-xs border-t-2 border-slate-300 bg-slate-50">
+                                <TableCell colspan="3" class="border-r border-slate-300">Total</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.input }}</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.fg }}</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.ab }}</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.sg }}</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.reject }}</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.fg_persen }}</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.ab_persen }}</TableCell>
+                                <TableCell class="text-center text-blue-700 border-r border-slate-300">{{ summary.sg_persen }}</TableCell>
+                                <TableCell class="text-center text-blue-700">{{ summary.reject_persen }}</TableCell>
+                            </TableRow>
+                        </tfoot>
                     </Table>
                 </div>
             </CardContent>

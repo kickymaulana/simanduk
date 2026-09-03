@@ -4,93 +4,107 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Kualitas;
-use App\Models\Produk;
-use App\Models\Warna;
+use App\Models\PengerjaanProduk;
+use App\Models\Proses;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class LaporanKualitasController extends Controller
 {
+    private const PROSES_QC_VISUAL = 'QC Visual & Dimensi';
+
     public function index(Request $request)
     {
         $now = now();
         $bulan = (int) ($request->bulan ?? $now->month);
         $tahun = (int) ($request->tahun ?? $now->year);
 
-        $jenis = $request->jenis;
-        $jenisLabel = match ($jenis) {
-            'body' => 'Body',
-            'tangki' => 'Tangki',
-            default => null,
-        };
-
         $lastDay = (int) $now->copy()->month($bulan)->year($tahun)->endOfMonth()->format('d');
 
-        $urutanKualitas = ['FG(EXPORT)', 'AB (DYNA / RAPTOR)', 'SG (HIU)', 'KW3 (BUANG)'];
-        $kualitasList = Kualitas::all(['id', 'kualitas'])
-            ->sortBy(fn ($k) => array_search($k->kualitas, $urutanKualitas) !== false ? array_search($k->kualitas, $urutanKualitas) : 99)
-            ->values();
-        $warnaList = Warna::orderBy('id')->get(['id', 'warna']);
+        $kualitas = Kualitas::all(['id', 'kualitas']);
+        $idFG = $kualitas->firstWhere('kualitas', 'FG(EXPORT)')?->id;
+        $idAB = $kualitas->firstWhere('kualitas', 'AB (DYNA / RAPTOR)')?->id;
+        $idSG = $kualitas->firstWhere('kualitas', 'SG (HIU)')?->id;
 
-        $base = fn ($col) => Produk::query()
-            ->whereNotNull($col)
-            ->whereMonth('updated_at', $bulan)
-            ->whereYear('updated_at', $tahun)
-            ->when($jenisLabel, fn ($q) => $q->where('jenis', $jenisLabel));
+        $qcProses = Proses::where('proses', self::PROSES_QC_VISUAL)->first();
 
-        $kualitasRows = $base('kualitas_id')
-            ->select(DB::raw('DATE(updated_at) as tanggal'), 'kualitas_id', DB::raw('COUNT(*) as jml'))
-            ->groupBy('tanggal', 'kualitas_id')
-            ->get()
-            ->keyBy(fn ($r) => $r->tanggal . '-' . $r->kualitas_id);
+        $rows = [];
+        $summary = ['input' => 0, 'fg' => 0, 'ab' => 0, 'sg' => 0, 'reject' => 0];
 
-        $warnaRows = $base('warna_id')
-            ->select(DB::raw('DATE(updated_at) as tanggal'), 'warna_id', DB::raw('COUNT(*) as jml'))
-            ->groupBy('tanggal', 'warna_id')
-            ->get()
-            ->keyBy(fn ($r) => $r->tanggal . '-' . $r->warna_id);
+        if ($qcProses) {
+            $grouped = PengerjaanProduk::query()
+                ->where('pengerjaan_produk.proses_id', $qcProses->id)
+                ->whereMonth('pengerjaan_produk.created_at', $bulan)
+                ->whereYear('pengerjaan_produk.created_at', $tahun)
+                ->join('produk', 'produk.id', '=', 'pengerjaan_produk.produk_id')
+                ->select(
+                    DB::raw('DATE(pengerjaan_produk.created_at) as tanggal'),
+                    'produk.jenis',
+                    'pengerjaan_produk.status_kondisi',
+                    'produk.kualitas_id',
+                    DB::raw('COUNT(*) as jml')
+                )
+                ->groupBy('tanggal', 'produk.jenis', 'pengerjaan_produk.status_kondisi', 'produk.kualitas_id')
+                ->get();
 
-        $rowsKualitas = [];
-        $rowsWarna = [];
-        $sumKualitas = $kualitasList->pluck('kualitas')->flip()->map(fn () => 0)->all();
-        $sumWarna = $warnaList->pluck('warna')->flip()->map(fn () => 0)->all();
-
-        for ($day = 1; $day <= $lastDay; $day++) {
-            $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $day);
-            $rk = ['tanggal' => $day];
-            $rw = ['tanggal' => $day];
-
-            foreach ($kualitasList as $k) {
-                $v = (int) ($kualitasRows[$tanggal . '-' . $k->id]->jml ?? 0);
-                $rk[$k->kualitas] = $v;
-                $sumKualitas[$k->kualitas] += $v;
-            }
-            foreach ($warnaList as $w) {
-                $v = (int) ($warnaRows[$tanggal . '-' . $w->id]->jml ?? 0);
-                $rw[$w->warna] = $v;
-                $sumWarna[$w->warna] += $v;
+            $raw = [];
+            foreach ($grouped as $g) {
+                $raw[$g->tanggal][$g->jenis][$g->status_kondisi][$g->kualitas_id] = (int) $g->jml;
             }
 
-            $rowsKualitas[] = $rk;
-            $rowsWarna[] = $rw;
+            foreach (['Body', 'Tangki'] as $jenis) {
+                for ($day = 1; $day <= $lastDay; $day++) {
+                    $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $day);
+                    $cell = $raw[$tanggal][$jenis] ?? [];
+
+                    $input = array_sum(array_map(fn ($s) => array_sum($s), $cell));
+                    if ($input === 0) {
+                        continue;
+                    }
+
+                    $fg = (int) ($cell['OK'][$idFG] ?? 0);
+                    $ab = (int) ($cell['OK'][$idAB] ?? 0);
+                    $sg = (int) ($cell['OK'][$idSG] ?? 0);
+                    $reject = (int) array_sum($cell['Buang'] ?? []);
+
+                    $rows[] = [
+                        'tanggal' => $day,
+                        'jenis' => $jenis,
+                        'input' => $input,
+                        'fg' => $fg,
+                        'ab' => $ab,
+                        'sg' => $sg,
+                        'reject' => $reject,
+                        'fg_persen' => $this->persen($fg, $input),
+                        'ab_persen' => $this->persen($ab, $input),
+                        'sg_persen' => $this->persen($sg, $input),
+                        'reject_persen' => $this->persen($reject, $input),
+                    ];
+
+                    $summary['input'] += $input;
+                    $summary['fg'] += $fg;
+                    $summary['ab'] += $ab;
+                    $summary['sg'] += $sg;
+                    $summary['reject'] += $reject;
+                }
+            }
         }
 
-        $minYear = (int) (Produk::whereNotNull('kualitas_id')
-            ->when($jenisLabel, fn ($q) => $q->where('jenis', $jenisLabel))
-            ->min(DB::raw('YEAR(updated_at)')) ?? $now->year);
+        $summary['fg_persen'] = $this->persen($summary['fg'], $summary['input']);
+        $summary['ab_persen'] = $this->persen($summary['ab'], $summary['input']);
+        $summary['sg_persen'] = $this->persen($summary['sg'], $summary['input']);
+        $summary['reject_persen'] = $this->persen($summary['reject'], $summary['input']);
+
+        $minYear = (int) (PengerjaanProduk::where('proses_id', $qcProses->id ?? 0)
+            ->min(DB::raw('YEAR(created_at)')) ?? $now->year);
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
         return Inertia::render('LaporanKualitas/Index', [
-            'rowsKualitas' => $rowsKualitas,
-            'rowsWarna' => $rowsWarna,
-            'kualitasList' => $kualitasList->pluck('kualitas')->all(),
-            'warnaList' => $warnaList->pluck('warna')->all(),
-            'summaryKualitas' => $sumKualitas,
-            'summaryWarna' => $sumWarna,
+            'rows' => $rows,
+            'summary' => $summary,
             'filter' => [
                 'bulan' => $bulan,
                 'tahun' => $tahun,
-                'jenis' => $jenisLabel,
                 'daftar_bulan' => [
                     1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
                     5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
@@ -99,5 +113,10 @@ class LaporanKualitasController extends Controller
                 'daftar_tahun' => $daftarTahun,
             ],
         ]);
+    }
+
+    private function persen($angka, $total): string
+    {
+        return $total > 0 ? round($angka / $total * 100, 1) . '%' : '0%';
     }
 }
