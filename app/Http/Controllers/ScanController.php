@@ -357,8 +357,8 @@ class ScanController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($produk, $sesi, $statusKondisi, $updateProduk, $cacatIds, $pakaiProsesBuang) {
-                $pengerjaanLeader = $this->catatPengerjaan($produk, $sesi, $statusKondisi);
+            DB::transaction(function () use ($produk, $sesi, $statusKondisi, $updateProduk, $cacatIds, $pakaiProsesBuang, $request) {
+                $pengerjaanLeader = $this->catatPengerjaan($produk, $sesi, $statusKondisi, $request->kualitas_id ?? null);
 
                 if (! empty($cacatIds) && $pengerjaanLeader) {
                     $this->catatCacatDanPj($pengerjaanLeader, $produk, $sesi, $cacatIds, $pakaiProsesBuang);
@@ -378,24 +378,21 @@ class ScanController extends Controller
     /**
      * Catat pengerjaan untuk leader + semua anggota tim.
      */
-    private function catatPengerjaan(Produk $produk, SesiKerja $sesi, string $statusKondisi)
+    private function catatPengerjaan(Produk $produk, SesiKerja $sesi, string $statusKondisi, ?int $kualitasId = null)
     {
-        $leader = PengerjaanProduk::create([
-            'user_id'       => Auth::id(),
-            'produk_id'     => $produk->id,
-            'sesi_kerja_id' => $sesi->id,
-            'proses_id'     => $sesi->proses_id,
+        $data = [
+            'user_id'        => Auth::id(),
+            'produk_id'      => $produk->id,
+            'sesi_kerja_id'  => $sesi->id,
+            'proses_id'      => $sesi->proses_id,
             'status_kondisi' => $statusKondisi,
-        ]);
+            'kualitas_id'    => $kualitasId,
+        ];
+
+        $leader = PengerjaanProduk::create($data);
 
         foreach ($sesi->sesi_kerja_members as $member) {
-            PengerjaanProduk::create([
-                'user_id'       => $member->user_id,
-                'produk_id'     => $produk->id,
-                'sesi_kerja_id' => $sesi->id,
-                'proses_id'     => $sesi->proses_id,
-                'status_kondisi' => $statusKondisi,
-            ]);
+            PengerjaanProduk::create(array_merge($data, ['user_id' => $member->user_id]));
         }
 
         return $leader;

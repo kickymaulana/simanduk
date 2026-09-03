@@ -34,15 +34,17 @@ class LaporanKualitasController extends Controller
         if ($qcProses) {
             $grouped = PengerjaanProduk::query()
                 ->where('pengerjaan_produk.proses_id', $qcProses->id)
-                ->whereMonth('pengerjaan_produk.created_at', $bulan)
-                ->whereYear('pengerjaan_produk.created_at', $tahun)
+                ->join('sesi_kerja', 'sesi_kerja.id', '=', 'pengerjaan_produk.sesi_kerja_id')
+                ->whereNotNull('sesi_kerja.tanggal_masuk')
+                ->whereMonth('sesi_kerja.tanggal_masuk', $bulan)
+                ->whereYear('sesi_kerja.tanggal_masuk', $tahun)
                 ->join('produk', 'produk.id', '=', 'pengerjaan_produk.produk_id')
                 ->select(
-                    DB::raw('DATE(pengerjaan_produk.created_at) as tanggal'),
+                    DB::raw('DATE(sesi_kerja.tanggal_masuk) as tanggal'),
                     'produk.jenis',
                     'pengerjaan_produk.status_kondisi',
                     'produk.kualitas_id',
-                    DB::raw('COUNT(*) as jml')
+                    DB::raw('COUNT(DISTINCT pengerjaan_produk.produk_id) as jml')
                 )
                 ->groupBy('tanggal', 'produk.jenis', 'pengerjaan_produk.status_kondisi', 'produk.kualitas_id')
                 ->get();
@@ -95,8 +97,10 @@ class LaporanKualitasController extends Controller
         $summary['sg_persen'] = $this->persen($summary['sg'], $summary['input']);
         $summary['reject_persen'] = $this->persen($summary['reject'], $summary['input']);
 
-        $minYear = (int) (PengerjaanProduk::where('proses_id', $qcProses->id ?? 0)
-            ->min(DB::raw('YEAR(created_at)')) ?? $now->year);
+        $minYear = (int) (PengerjaanProduk::join('sesi_kerja', 'sesi_kerja.id', '=', 'pengerjaan_produk.sesi_kerja_id')
+            ->where('pengerjaan_produk.proses_id', $qcProses->id ?? 0)
+            ->whereNotNull('sesi_kerja.tanggal_masuk')
+            ->min(DB::raw('YEAR(sesi_kerja.tanggal_masuk)')) ?? $now->year);
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
         return Inertia::render('LaporanKualitas/Index', [
