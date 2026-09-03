@@ -127,6 +127,7 @@ Route::middleware('auth', 'role:admin')->group(function () {
 
     Route::get('pengaturan', [SettingController::class, 'index'])->name('pengaturan');
     Route::post('pengaturan/toggle-cek-urutan', [SettingController::class, 'toggleCekUrutan'])->name('pengaturan.toggle_cek_urutan');
+    Route::post('pengaturan/cut-off', [SettingController::class, 'updateCutOff'])->name('pengaturan.cut_off');
 });
 
 Route::middleware('auth')->group(function () {

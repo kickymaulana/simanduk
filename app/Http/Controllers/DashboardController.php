@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cacat;
 use App\Models\PengerjaanProduk;
 use App\Models\PengerjaanCacat;
+use App\Support\CutOff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -36,9 +37,9 @@ class DashboardController extends Controller
         $tahun = (int) ($request->tahun ?? $now->year);
         $prosesQcIds = $this->prosesQcIds();
 
-        // --- Filter Waktu ---
-        $monthScope = fn ($q) => $q->whereMonth('created_at', $bulan)
-            ->whereYear('created_at', $tahun);
+        // --- Filter Waktu (cut off produksi) ---
+        [$start, $end] = CutOff::rangeBulan($bulan, $tahun);
+        $monthScope = fn ($q) => $q->where('created_at', '>=', $start)->where('created_at', '<', $end);
 
         // 1. Reject Summary Bulanan (exclude proses QC)
         $totalBulan = (clone $monthScope(PengerjaanProduk::query()))->whereNotIn('proses_id', $prosesQcIds)->count();
@@ -61,8 +62,8 @@ class DashboardController extends Controller
         $paretoRows = PengerjaanCacat::query()
             ->join('pengerjaan_produk', 'pengerjaan_cacat.pengerjaan_produk_id', '=', 'pengerjaan_produk.id')
             ->whereIn('pengerjaan_produk.status_kondisi', self::REJECT)
-            ->whereMonth('pengerjaan_produk.created_at', $bulan)
-            ->whereYear('pengerjaan_produk.created_at', $tahun)
+            ->where('pengerjaan_produk.created_at', '>=', $start)
+            ->where('pengerjaan_produk.created_at', '<', $end)
             ->whereNotIn('pengerjaan_produk.proses_id', $prosesQcIds)
             ->select('pengerjaan_cacat.cacat_id', DB::raw('count(*) as total'))
             ->groupBy('pengerjaan_cacat.cacat_id')
@@ -103,10 +104,15 @@ class DashboardController extends Controller
             })->values()->all();
 
         // 3. Total Output (Trend 12 Bulan Tahun Terpilih) - TETAP SEMUA PROSES
+        $jam = CutOff::jam();
+        $trendStart = now()->create($tahun, 1, 1, 0, 0, 0)->addHours($jam);
+        $trendEnd = now()->create($tahun + 1, 1, 1, 0, 0, 0)->addHours($jam);
+
         $trendRows = (clone PengerjaanProduk::query())
-            ->whereYear('created_at', $tahun)
-            ->select(DB::raw('MONTH(created_at) as m'), DB::raw('count(*) as total'))
-            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->where('created_at', '>=', $trendStart)
+            ->where('created_at', '<', $trendEnd)
+            ->select(DB::raw('MONTH(' . CutOff::expr('created_at') . ') as m'), DB::raw('count(*) as total'))
+            ->groupBy(DB::raw('MONTH(' . CutOff::expr('created_at') . ')'))
             ->get()
             ->pluck('total', 'm')
             ->toArray();
@@ -123,8 +129,8 @@ class DashboardController extends Controller
         $rejectByDepartemen = DB::table('pengerjaan_produk')
             ->join('users', 'users.id', '=', 'pengerjaan_produk.user_id')
             ->leftJoin('departemen', 'departemen.id', '=', 'users.departemen_id')
-            ->whereMonth('pengerjaan_produk.created_at', $bulan)
-            ->whereYear('pengerjaan_produk.created_at', $tahun)
+            ->where('pengerjaan_produk.created_at', '>=', $start)
+            ->where('pengerjaan_produk.created_at', '<', $end)
             ->whereNotIn('pengerjaan_produk.proses_id', $prosesQcIds)
             ->where(function ($q) {
                 $q->whereNull('departemen.id')
@@ -175,7 +181,7 @@ class DashboardController extends Controller
         })->sortByDesc('persen')->values()->all();
 
         // Filter options
-        $minYear = (int) (PengerjaanProduk::min(DB::raw('YEAR(created_at)')) ?? $now->year);
+        $minYear = (int) (PengerjaanProduk::min(DB::raw('YEAR(' . CutOff::expr('created_at') . ')')) ?? $now->year);
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
         return Inertia::render('Dashboard/Index', [

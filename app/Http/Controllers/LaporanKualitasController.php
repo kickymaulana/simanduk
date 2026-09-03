@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Kualitas;
 use App\Models\PengerjaanProduk;
 use App\Models\Proses;
+use App\Support\CutOff;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -18,6 +19,7 @@ class LaporanKualitasController extends Controller
         $now = now();
         $bulan = (int) ($request->bulan ?? $now->month);
         $tahun = (int) ($request->tahun ?? $now->year);
+        $jamCutOff = CutOff::jam();
 
         $lastDay = (int) $now->copy()->month($bulan)->year($tahun)->endOfMonth()->format('d');
 
@@ -32,21 +34,21 @@ class LaporanKualitasController extends Controller
         $summary = ['input' => 0, 'fg' => 0, 'ab' => 0, 'sg' => 0, 'reject' => 0];
 
         if ($qcProses) {
+            [$start, $end] = CutOff::rangeBulan($bulan, $tahun);
+
             $grouped = PengerjaanProduk::query()
                 ->where('pengerjaan_produk.proses_id', $qcProses->id)
-                ->join('sesi_kerja', 'sesi_kerja.id', '=', 'pengerjaan_produk.sesi_kerja_id')
-                ->whereNotNull('sesi_kerja.tanggal_masuk')
-                ->whereMonth('sesi_kerja.tanggal_masuk', $bulan)
-                ->whereYear('sesi_kerja.tanggal_masuk', $tahun)
+                ->where('pengerjaan_produk.created_at', '>=', $start)
+                ->where('pengerjaan_produk.created_at', '<', $end)
                 ->join('produk', 'produk.id', '=', 'pengerjaan_produk.produk_id')
                 ->select(
-                    DB::raw('DATE(sesi_kerja.tanggal_masuk) as tanggal'),
+                    DB::raw('DATE(' . CutOff::expr('pengerjaan_produk.created_at') . ') as tanggal'),
                     'produk.jenis',
                     'pengerjaan_produk.status_kondisi',
-                    'produk.kualitas_id',
+                    'pengerjaan_produk.kualitas_id',
                     DB::raw('COUNT(DISTINCT pengerjaan_produk.produk_id) as jml')
                 )
-                ->groupBy('tanggal', 'produk.jenis', 'pengerjaan_produk.status_kondisi', 'produk.kualitas_id')
+                ->groupBy('tanggal', 'produk.jenis', 'pengerjaan_produk.status_kondisi', 'pengerjaan_produk.kualitas_id')
                 ->get();
 
             $raw = [];
@@ -97,10 +99,8 @@ class LaporanKualitasController extends Controller
         $summary['sg_persen'] = $this->persen($summary['sg'], $summary['input']);
         $summary['reject_persen'] = $this->persen($summary['reject'], $summary['input']);
 
-        $minYear = (int) (PengerjaanProduk::join('sesi_kerja', 'sesi_kerja.id', '=', 'pengerjaan_produk.sesi_kerja_id')
-            ->where('pengerjaan_produk.proses_id', $qcProses->id ?? 0)
-            ->whereNotNull('sesi_kerja.tanggal_masuk')
-            ->min(DB::raw('YEAR(sesi_kerja.tanggal_masuk)')) ?? $now->year);
+        $minYear = (int) (PengerjaanProduk::where('proses_id', $qcProses->id ?? 0)
+            ->min(DB::raw('YEAR(' . CutOff::expr('created_at') . ')'))) ?: $now->year;
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
         return Inertia::render('LaporanKualitas/Index', [
@@ -109,6 +109,7 @@ class LaporanKualitasController extends Controller
             'filter' => [
                 'bulan' => $bulan,
                 'tahun' => $tahun,
+                'cut_off_jam' => $jamCutOff,
                 'daftar_bulan' => [
                     1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
                     5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Produk;
 use App\Models\Proses;
+use App\Support\CutOff;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -29,12 +30,14 @@ class LaporanProdukBuangController extends Controller
 
         $lastDay = (int) $now->copy()->month($bulan)->year($tahun)->endOfMonth()->format('d');
 
+        [$start, $end] = CutOff::rangeBulan($bulan, $tahun);
+
         $buangRows = Produk::query()
             ->where('status_akhir', 'Buang')
-            ->whereMonth('updated_at', $bulan)
-            ->whereYear('updated_at', $tahun)
+            ->where('updated_at', '>=', $start)
+            ->where('updated_at', '<', $end)
             ->when($jenisLabel, fn ($q) => $q->where('jenis', $jenisLabel))
-            ->select(DB::raw('DATE(updated_at) as tanggal'), 'proses_id', DB::raw('COUNT(*) as jml'))
+            ->select(DB::raw('DATE(' . CutOff::expr('updated_at') . ') as tanggal'), 'proses_id', DB::raw('COUNT(*) as jml'))
             ->groupBy('tanggal', 'proses_id')
             ->get()
             ->keyBy(fn ($r) => $r->tanggal . '-' . $r->proses_id);
@@ -61,7 +64,7 @@ class LaporanProdukBuangController extends Controller
 
         $minYear = (int) (Produk::where('status_akhir', 'Buang')
             ->when($jenisLabel, fn ($q) => $q->where('jenis', $jenisLabel))
-            ->min(DB::raw('YEAR(updated_at)')) ?? $now->year);
+            ->min(DB::raw('YEAR(' . CutOff::expr('updated_at') . ')')) ?? $now->year);
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
         return Inertia::render('LaporanProdukBuang/Index', [

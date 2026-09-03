@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\SesiKerja;
 use App\Models\PengerjaanProduk;
 use App\Models\Proses;
+use App\Support\CutOff;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -32,13 +33,15 @@ class LaporanScanController extends Controller
         // Hari terakhir di bulan tsb
         $lastDay = (int) $now->copy()->month($bulan)->year($tahun)->endOfMonth()->format('d');
 
-        // 1. Actual per (tanggal, proses_id)
+        // 1. Actual per (tanggal_cutoff, proses_id)
+        [$start, $end] = CutOff::rangeBulan($bulan, $tahun);
+
         $actualRows = PengerjaanProduk::query()
-            ->whereMonth('created_at', $bulan)
-            ->whereYear('created_at', $tahun)
+            ->where('created_at', '>=', $start)
+            ->where('created_at', '<', $end)
             ->when($jenisLabel, fn ($q) => $q->whereHas('sesiKerja', fn ($q2) => $q2->where('jenis', $jenisLabel)))
             ->select(
-                DB::raw('DATE(created_at) as tanggal'),
+                DB::raw('DATE(' . CutOff::expr('created_at') . ') as tanggal'),
                 'proses_id',
                 DB::raw('COUNT(DISTINCT produk_id, proses_id) as actual')
             )
@@ -104,7 +107,7 @@ class LaporanScanController extends Controller
         // Tahun list untuk dropdown
         $minYearQuery = PengerjaanProduk::query()
             ->when($jenisLabel, fn ($q) => $q->whereHas('sesiKerja', fn ($q2) => $q2->where('jenis', $jenisLabel)));
-        $minYear = (int) ($minYearQuery->min(DB::raw('YEAR(created_at)')) ?? $now->year);
+        $minYear = (int) ($minYearQuery->min(DB::raw('YEAR(' . CutOff::expr('created_at') . ')')) ?? $now->year);
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
         return Inertia::render('LaporanScan/Index', [

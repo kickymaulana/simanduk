@@ -4,16 +4,46 @@ import { Head, router } from "@inertiajs/vue3";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
-import { IconSettings, IconLock, IconLockOpen, IconAlertTriangle } from "@tabler/icons-vue";
+import { IconSettings, IconLock, IconLockOpen, IconAlertTriangle, IconClock } from "@tabler/icons-vue";
 
 const props = defineProps<{
     cek_urutan_scan: boolean;
+    cut_off_jam: number;
 }>();
 
 const isActive = ref(props.cek_urutan_scan);
 const isToggling = ref(false);
+
+const cutOffJam = ref<number>(props.cut_off_jam);
+const isSavingCutOff = ref(false);
+
+const saveCutOff = () => {
+    if (isSavingCutOff.value) return;
+    isSavingCutOff.value = true;
+    router.post(route("pengaturan.cut_off"), { jam: cutOffJam.value }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success(`Jam cut off produksi: ${String(cutOffJam.value).padStart(2, "0")}:00`);
+        },
+        onError: () => {
+            toast.error("Gagal menyimpan jam cut off");
+        },
+        onFinish: () => {
+            isSavingCutOff.value = false;
+        },
+    });
+};
 
 const toggle = () => {
     if (isToggling.value) return;
@@ -95,6 +125,44 @@ defineOptions({ layout: AuthenticatedLayout });
                     <p class="text-xs text-blue-800 leading-relaxed">
                         Nonaktifkan fitur ini hanya jika ada produk yang terblokir karena tidak sesuai urutan (misal ada proses yang terlewat). Setelah produk selesai discan, segera aktifkan kembali.
                     </p>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card class="border-none shadow-sm ring-1 ring-slate-200">
+            <CardHeader class="pb-3">
+                <CardTitle class="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <IconClock class="size-4" /> Jam Cut Off Produksi
+                </CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-4">
+                <div class="flex items-start gap-3 p-4 rounded-xl border bg-slate-50">
+                    <IconClock class="size-5 text-slate-500 shrink-0 mt-0.5" />
+                    <div class="text-sm text-muted-foreground leading-relaxed">
+                        Scan yang terjadi sebelum jam cut off dianggap milik <b>hari produksi sebelumnya</b>.
+                        Contoh: cut off <b>06:00</b> → scan pukul 03:30 tanggal 4 dihitung sebagai produksi tanggal 3.
+                        Berlaku di laporan per-hari: Laporan Scan, Kualitas, Produk Buang, dan Dashboard.
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <Select v-model="cutOffJam">
+                        <SelectTrigger class="w-40 h-9 text-xs">
+                            <SelectValue placeholder="Pilih jam" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem v-for="j in 24" :key="j - 1" :value="j - 1">
+                                {{ String(j - 1).padStart(2, "0") }}:00
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button
+                        size="sm"
+                        :disabled="isSavingCutOff || cutOffJam === props.cut_off_jam"
+                        @click="saveCutOff"
+                    >
+                        Simpan
+                    </Button>
                 </div>
             </CardContent>
         </Card>
