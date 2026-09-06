@@ -173,16 +173,16 @@ const formatDate = (dateString: string) => {
                                     </Badge>
                                 </TableCell>
                                 <TableCell class="text-sm">
-                                    {{ item.user_scan.name }}
+                                    {{ item.user_scan?.name ?? '-' }}
                                 </TableCell>
                                 <TableCell class="text-sm">
-                                    {{ item.proses_scan.proses }}
+                                    {{ item.proses_scan?.proses ?? '-' }}
                                 </TableCell>
                                 <TableCell class="text-sm">
-                                    {{ item.user_pj.name }}
+                                    {{ item.user_pj?.name ?? '-' }}
                                 </TableCell>
                                 <TableCell class="text-sm">
-                                    {{ item.proses_pj.proses }}
+                                    {{ item.proses_pj?.proses ?? '-' }}
                                 </TableCell>
                                 <TableCell class="text-right">
                                     <Button variant="ghost" class="size-10" as-child>
