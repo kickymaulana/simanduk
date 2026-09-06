@@ -56,9 +56,22 @@ class LaporanKualitasController extends Controller
                 $raw[$g->tanggal][$g->jenis][$g->status_kondisi][$g->kualitas_id] = (int) $g->jml;
             }
 
-            foreach (['Body', 'Tangki'] as $jenis) {
-                for ($day = 1; $day <= $lastDay; $day++) {
-                    $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $day);
+            for ($day = 1; $day <= $lastDay; $day++) {
+                $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $day);
+
+                // Skip tanggal yang tidak punya data sama sekali (Body & Tangki)
+                $adaData = false;
+                foreach (['Body', 'Tangki'] as $jenis) {
+                    if (!empty($raw[$tanggal][$jenis])) {
+                        $adaData = true;
+                        break;
+                    }
+                }
+                if (!$adaData) {
+                    continue;
+                }
+
+                foreach (['Body', 'Tangki'] as $jenis) {
                     $cell = $raw[$tanggal][$jenis] ?? [];
 
                     $input = array_sum(array_map(fn ($s) => array_sum($s), $cell));
