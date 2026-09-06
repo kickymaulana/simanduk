@@ -57,9 +57,13 @@ class LaporanTraceController extends Controller
             if ($prosesName === self::CASTING && ! $shiftCasting) {
                 $shiftCasting = $pp->sesiKerja?->shift?->shift;
             }
-            foreach ($pp->pengerjaan_cacats as $pc) {
-                if ($pc->cacat?->cacat) {
-                    $rejects[$pc->cacat->cacat] = true;
+            // Item reject hanya diambil dari proses QC Visual & Dimensi
+            // dan hanya yang berstatus Buang (final), bukan toleransi (In Proses).
+            if ($prosesName === self::QC_VISUAL && $pp->status_kondisi === 'Buang') {
+                foreach ($pp->pengerjaan_cacats as $pc) {
+                    if ($pc->cacat?->cacat) {
+                        $rejects[$pc->cacat->cacat] = true;
+                    }
                 }
             }
         }
