@@ -26,6 +26,7 @@ import {
     IconTractor,
     IconArrowBackUp,
     IconSettings,
+    IconChartBar,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -132,6 +133,13 @@ const filteredNavMain = computed(() => {
         url: route("temuan.reject.qc"),
         icon: IconClipboardList,
         root: "TemuanRejectQc",
+    });
+
+    menus.push({
+        title: "Persen Item Reject",
+        url: route("persen.item.reject"),
+        icon: IconChartBar,
+        root: "PersenItemReject",
     });
 
     menus.push({

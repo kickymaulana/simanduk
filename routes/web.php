@@ -1,39 +1,37 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Master\UserController;
-use App\Http\Controllers\Master\RoleController;
-use App\Http\Controllers\Master\DepartemenController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Master\CacatController;
-use App\Http\Controllers\Master\AturanPenolakanController;
-use App\Http\Controllers\SesiKerjaController;
-use App\Http\Controllers\ScanController;
-use App\Http\Controllers\QrBelumDiscanController;
-use App\Http\Controllers\Master\ProsesController;
-use App\Http\Controllers\Master\OvenController;
-use App\Http\Controllers\Master\ShiftController;
-use App\Http\Controllers\ProdukController;
-use App\Http\Controllers\RiwayatScanMasukController;
-use App\Http\Controllers\TotalPengerjaanUserController;
-use App\Http\Controllers\TemuanRejectQcController;
-use App\Http\Controllers\ProsesProduksiController;
-use App\Http\Controllers\StokController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KoreksiScanController;
 use App\Http\Controllers\LaporanKualitasController;
 use App\Http\Controllers\LaporanProdukBuangController;
 use App\Http\Controllers\LaporanScanController;
 use App\Http\Controllers\LaporanTraceController;
+use App\Http\Controllers\Master\AturanPenolakanController;
+use App\Http\Controllers\Master\CacatController;
+use App\Http\Controllers\Master\DepartemenController;
 use App\Http\Controllers\Master\KualitasController;
+use App\Http\Controllers\Master\OvenController;
+use App\Http\Controllers\Master\ProsesController;
+use App\Http\Controllers\Master\RoleController;
+use App\Http\Controllers\Master\ShiftController;
+use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\Master\WarnaController;
 use App\Http\Controllers\PeriksaController;
-use App\Http\Controllers\KoreksiScanController;
+use App\Http\Controllers\PersenItemRejectController;
+use App\Http\Controllers\ProdukController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProsesProduksiController;
+use App\Http\Controllers\QrBelumDiscanController;
+use App\Http\Controllers\RiwayatScanMasukController;
+use App\Http\Controllers\ScanController;
+use App\Http\Controllers\SesiKerjaController;
 use App\Http\Controllers\SettingController;
-
-
+use App\Http\Controllers\StokController;
+use App\Http\Controllers\TemuanRejectQcController;
+use App\Http\Controllers\TotalPengerjaanUserController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
 
@@ -165,6 +163,7 @@ Route::middleware('auth')->group(function () {
     Route::get('riwayat-scan-masuk', [RiwayatScanMasukController::class, 'index'])->name('riwayat.scan.masuk');
     Route::get('total-pengerjaan-user', [TotalPengerjaanUserController::class, 'index'])->name('total.pengerjaan.user');
     Route::get('temuan-reject-qc', [TemuanRejectQcController::class, 'index'])->name('temuan.reject.qc');
+    Route::get('persen-item-reject', [PersenItemRejectController::class, 'index'])->name('persen.item.reject');
 
     Route::get('produk/{id}', [ProdukController::class, 'show'])->name('produk.show');
     Route::post('produk/{produk}/fix-jenis', [ProdukController::class, 'fixJenis'])->name('produk.fix_jenis');
