@@ -94,52 +94,58 @@ const filteredNavMain = computed(() => {
     });
 
     menus.push({
-        title: "Laporan Scan",
-        url: route("laporan.scan"),
+        title: "Laporan",
         icon: IconFileAnalytics,
-        root: "LaporanScan",
-    });
-
-    menus.push({
-        title: "Laporan Kualitas",
-        url: route("laporan.kualitas"),
-        icon: IconPalette,
-        root: "LaporanKualitas",
-    });
-
-    menus.push({
-        title: "Laporan Produk Buang",
-        url: route("laporan.produk.buang"),
-        icon: IconTrash,
-        root: "LaporanProdukBuang",
-    });
-
-    menus.push({
-        title: "Laporan Trace Operator",
-        url: route("laporan.trace.operator"),
-        icon: IconUsers,
-        root: "LaporanTrace",
-    });
-
-    menus.push({
-        title: "Laporan Trace Mesin",
-        url: route("laporan.trace.mesin"),
-        icon: IconTractor,
-        root: "LaporanTrace",
-    });
-
-    menus.push({
-        title: "Temuan Reject QC",
-        url: route("temuan.reject.qc"),
-        icon: IconClipboardList,
-        root: "TemuanRejectQc",
-    });
-
-    menus.push({
-        title: "Persen Item Reject",
-        url: route("persen.item.reject"),
-        icon: IconChartBar,
-        root: "PersenItemReject",
+        children: [
+            {
+                title: "Laporan Scan",
+                url: route("laporan.scan"),
+                icon: IconFileAnalytics,
+                root: "LaporanScan",
+            },
+            {
+                title: "Laporan Kualitas",
+                url: route("laporan.kualitas"),
+                icon: IconPalette,
+                root: "LaporanKualitas",
+            },
+            {
+                title: "Laporan Produk Buang",
+                url: route("laporan.produk.buang"),
+                icon: IconTrash,
+                root: "LaporanProdukBuang",
+            },
+            {
+                title: "Data Reject Sanitary",
+                url: route("data.reject.sanitary"),
+                icon: IconTrash,
+                root: "DataRejectSanitary",
+            },
+            {
+                title: "Laporan Trace Operator",
+                url: route("laporan.trace.operator"),
+                icon: IconUsers,
+                root: "LaporanTrace",
+            },
+            {
+                title: "Laporan Trace Mesin",
+                url: route("laporan.trace.mesin"),
+                icon: IconTractor,
+                root: "LaporanTrace",
+            },
+            {
+                title: "Temuan Reject QC",
+                url: route("temuan.reject.qc"),
+                icon: IconClipboardList,
+                root: "TemuanRejectQc",
+            },
+            {
+                title: "Persen Item Reject",
+                url: route("persen.item.reject"),
+                icon: IconChartBar,
+                root: "PersenItemReject",
+            },
+        ],
     });
 
     menus.push({

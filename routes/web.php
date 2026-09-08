@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KoreksiScanController;
 use App\Http\Controllers\LaporanKualitasController;
 use App\Http\Controllers\LaporanProdukBuangController;
+use App\Http\Controllers\DataRejectSanitaryController;
 use App\Http\Controllers\LaporanScanController;
 use App\Http\Controllers\LaporanTraceController;
 use App\Http\Controllers\Master\AturanPenolakanController;
@@ -183,6 +184,7 @@ Route::middleware('auth')->group(function () {
     Route::get('laporan-kualitas', [LaporanKualitasController::class, 'index'])->name('laporan.kualitas');
 
     Route::get('laporan-produk-buang', [LaporanProdukBuangController::class, 'index'])->name('laporan.produk.buang');
+    Route::get('data-reject-sanitary', [DataRejectSanitaryController::class, 'index'])->name('data.reject.sanitary');
 
     Route::get('laporan-trace-operator', [LaporanTraceController::class, 'operator'])->name('laporan.trace.operator');
     Route::get('laporan-trace-mesin', [LaporanTraceController::class, 'mesin'])->name('laporan.trace.mesin');
