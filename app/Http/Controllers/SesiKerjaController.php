@@ -34,13 +34,18 @@ class SesiKerjaController extends Controller
                     ->orWhere('jenis', 'like', "%{$search}%");
                 });
             })
+            ->when($request->proses_id, fn ($query, $prosesId) => $query->where('proses_id', $prosesId))
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('SesiKerjas/Index', [
             'sesikerjas' => $sesikerjas,
-            'filters' => $request->only(['search']),
+            'proses' => Proses::query()
+                ->where('is_active', true)
+                ->orderBy('urutan')
+                ->get(['id', 'proses']),
+            'filters' => $request->only(['search', 'proses_id']),
             'sesi_kerja_id' => session('sesi_kerja_id'),
         ]);
     }

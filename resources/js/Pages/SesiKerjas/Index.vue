@@ -14,6 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     IconPlus,
     IconSearch,
     IconClock,
@@ -35,13 +42,23 @@ const props = defineProps<{
         to: number;
         total: number;
     };
-    filters: { search: string };
+    proses: Array<{ id: number; proses: string }>;
+    filters: { search?: string; proses_id?: string | number };
     sesi_kerja_id: number | null;
 }>();
 
 const search = ref(props.filters.search || "");
+const prosesId = ref(String(props.filters.proses_id || "all"));
 const authUserId = usePage().props.auth.user.id;
 let timeout: any;
+
+const applyFilters = () => {
+    router.get(
+        route("sesikerjas.index"),
+        { search: search.value, proses_id: prosesId.value === "all" ? undefined : prosesId.value },
+        { preserveState: true, replace: true },
+    );
+};
 
 // Watcher untuk pencarian dengan debounce 500ms
 watch(search, (value) => {
@@ -49,7 +66,7 @@ watch(search, (value) => {
     timeout = setTimeout(() => {
         router.get(
             route("sesikerjas.index"),
-            { search: value },
+            { search: value, proses_id: prosesId.value === "all" ? undefined : prosesId.value },
             { preserveState: true, replace: true },
         );
     }, 500);
@@ -58,6 +75,8 @@ watch(search, (value) => {
 const clearSearch = () => {
     search.value = "";
 };
+
+watch(prosesId, applyFilters);
 
 const toggleSesi = (id: number) => {
     if (props.sesi_kerja_id === id) {
@@ -103,6 +122,21 @@ const cleanLabel = (label: string) => {
                             <IconX class="size-4" />
                         </button>
                     </div>
+                    <Select v-model="prosesId">
+                        <SelectTrigger class="w-full md:w-52">
+                            <SelectValue placeholder="Semua proses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua proses</SelectItem>
+                            <SelectItem
+                                v-for="item in props.proses"
+                                :key="item.id"
+                                :value="String(item.id)"
+                            >
+                                {{ item.proses }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Button
                         as-child
                         class="bg-primary hover:bg-primary/90 shadow-md transition-all active:scale-95"
