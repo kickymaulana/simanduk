@@ -110,6 +110,12 @@ const filteredNavMain = computed(() => {
                 root: "LaporanKualitas",
             },
             {
+                title: "Rincian Kerusakan QC",
+                url: route("laporan.kerusakan.qc"),
+                icon: IconChartBar,
+                root: "LaporanKerusakanQc",
+            },
+            {
                 title: "Laporan Produk Buang",
                 url: route("laporan.produk.buang"),
                 icon: IconTrash,
