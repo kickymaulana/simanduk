@@ -26,7 +26,7 @@ defineOptions({ layout: AuthenticatedLayout });
 
 const props = defineProps<{
     cacats: {
-        data: Array<{ id: number; cacat: string; created_at: string }>;
+        data: Array<{ id: number; cacat: string; jenis: "Body" | "Tangki"; created_at: string }>;
         links: any[];
         from: number;
         to: number;
@@ -108,7 +108,8 @@ const cleanLabel = (label: string) => {
                     <Table>
                         <TableHeader>
                             <TableRow class="bg-muted/50">
-                                <TableHead>Cacat</TableHead>
+                                <TableHead                                >Cacat</TableHead>
+                                <TableHead>Jenis</TableHead>
                                 <TableHead
                                     class="hidden md:table-cell text-center"
                                     >Ditambahkan Pada</TableHead
@@ -136,6 +137,7 @@ const cleanLabel = (label: string) => {
                                 >
                                     {{ item.cacat }}
                                 </TableCell>
+                                <TableCell><Badge variant="outline">{{ item.jenis }}</Badge></TableCell>
                                 <TableCell
                                     class="hidden md:table-cell text-center text-muted-foreground text-sm"
                                 >

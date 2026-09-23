@@ -12,7 +12,7 @@ import {
 } from "@tabler/icons-vue";
 
 defineOptions({ layout: AuthenticatedLayout });
-const form = useForm({ cacat: "" });
+const form = useForm({ cacat: "", jenis: "Body" });
 </script>
 
 <template>
@@ -53,6 +53,14 @@ const form = useForm({ cacat: "" });
                             >
                                 {{ form.errors.cacat }}
                             </p>
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="jenis">Jenis Produk</Label>
+                            <select id="jenis" v-model="form.jenis" class="h-10 rounded-md border bg-background px-3 text-sm">
+                                <option value="Body">Body</option>
+                                <option value="Tangki">Tangki</option>
+                            </select>
+                            <p v-if="form.errors.jenis" class="text-sm text-destructive">{{ form.errors.jenis }}</p>
                         </div>
                         <Button
                             type="submit"

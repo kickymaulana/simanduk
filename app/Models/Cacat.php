@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['cacat'])]
+#[Fillable(['cacat', 'jenis'])]
 #[Table('cacat')]
 class Cacat extends Model
 {
@@ -15,5 +15,4 @@ class Cacat extends Model
     {
         return $this->hasMany(AturanPenolakan::class, 'cacat_id');
     }
-
 }

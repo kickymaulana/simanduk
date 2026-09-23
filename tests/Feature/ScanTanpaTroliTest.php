@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\ScanController;
+use App\Models\AturanPenolakan;
+use App\Models\Cacat;
 use App\Models\Departemen;
 use App\Models\Kualitas;
 use App\Models\PengerjaanProduk;
+use App\Models\Produk;
 use App\Models\Proses;
 use App\Models\SesiKerja;
 use App\Models\Shift;
@@ -95,7 +98,7 @@ class ScanTanpaTroliTest extends TestCase
         $this->callScan('awal_store', ['qr' => 'DN00005678', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1', 'jenis' => 'Body']);
 
         // Reset sudah_scan agar bisa di-scan lagi sebagai validasi (simulasi pindah proses tidak di sini)
-        \App\Models\Produk::where('qrcode', 'DN00005678')->update(['sudah_scan' => 'Belum']);
+        Produk::where('qrcode', 'DN00005678')->update(['sudah_scan' => 'Belum']);
 
         $this->callScan('validasi_store', ['qr' => 'DN00005678']);
 
@@ -121,6 +124,22 @@ class ScanTanpaTroliTest extends TestCase
 
         $this->assertNotNull(session('errors'));
         $this->assertArrayHasKey('qr', session('errors')->toArray());
+    }
+
+    public function test_cacat_harus_sesuai_jenis_sesi(): void
+    {
+        $data = $this->setupData();
+        $cacat = Cacat::create(['cacat' => 'Pecah Tangki', 'jenis' => 'Tangki']);
+        AturanPenolakan::create(['cacat_id' => $cacat->id, 'proses_toleransi' => $data['proses']->id, 'proses_buang' => $data['proses']->id, 'proses_pemeriksa' => $data['proses']->id]);
+        Auth::login($data['leader']);
+        session(['sesi_kerja_id' => $data['sesi']->id]);
+        $this->callScan('awal_store', ['qr' => 'DN00001111', 'nomor_mesin' => 'Mesin 01', 'nomor_mould' => 'M1', 'asal_slip' => 'SS1', 'jenis' => 'Body']);
+        Produk::where('qrcode', 'DN00001111')->update(['sudah_scan' => 'Belum']);
+
+        $this->callScan('inproses_store', ['qr' => 'DN00001111', 'cacat_ids' => [$cacat->id]]);
+
+        $this->assertDatabaseMissing('pengerjaan_cacat', ['cacat_id' => $cacat->id]);
+        $this->assertArrayHasKey('cacat_ids', session('errors')->toArray());
     }
 
     public function test_pengerjaan_tidak_bergantung_pada_troli(): void

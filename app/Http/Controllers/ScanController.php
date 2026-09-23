@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ScanController extends Controller
 {
@@ -37,12 +38,12 @@ class ScanController extends Controller
             ->count();
     }
 
-    private function renderScan(string $page, array $extra = []): \Inertia\Response
+    private function renderScan(string $page, array $extra = []): Response
     {
         $sesi = $this->sesiAktif();
 
         return Inertia::render($page, array_merge([
-            'sesi'         => $sesi,
+            'sesi' => $sesi,
             'scan_counter' => $this->counterSesi($sesi),
         ], $extra));
     }
@@ -64,20 +65,20 @@ class ScanController extends Controller
     public function awal_store(Request $request)
     {
         $validated = $request->validate([
-            'qr'          => ['required', 'string', 'size:10', 'regex:/^[A-Z0-9]+$/', 'unique:produk,qrcode'],
+            'qr' => ['required', 'string', 'size:10', 'regex:/^[A-Z0-9]+$/', 'unique:produk,qrcode'],
             'nomor_mesin' => 'required|string',
             'nomor_mould' => 'required|string',
-            'asal_slip'   => 'required|string',
-            'is_sample'   => 'sometimes|boolean',
+            'asal_slip' => 'required|string',
+            'is_sample' => 'sometimes|boolean',
             'kode_sampel' => 'required_if:is_sample,1|nullable|string|max:255',
-            'jenis'       => 'required|in:Body,Tangki',
+            'jenis' => 'required|in:Body,Tangki',
         ], [
-            'qr.unique'       => 'QR Code ini sudah terdaftar.',
-            'qr.size'         => 'QR Code harus tepat 10 karakter.',
-            'qr.regex'        => 'QR Code hanya boleh huruf besar & angka.',
+            'qr.unique' => 'QR Code ini sudah terdaftar.',
+            'qr.size' => 'QR Code harus tepat 10 karakter.',
+            'qr.regex' => 'QR Code hanya boleh huruf besar & angka.',
             'nomor_mesin.required' => 'Pilih nomor mesin!',
             'nomor_mould.required' => 'Pilih nomor mould!',
-            'asal_slip.required'   => 'Pilih asal slip!',
+            'asal_slip.required' => 'Pilih asal slip!',
             'kode_sampel.required_if' => 'Kode sampel wajib diisi saat produk ditandai sampel!',
             'jenis.required' => 'Pilih jenis produk (Body/Tangki)!',
         ]);
@@ -93,16 +94,16 @@ class ScanController extends Controller
         try {
             DB::transaction(function () use ($qr, $validated, $sesi) {
                 $produk = Produk::create([
-                    'qrcode'     => $qr,
-                    'nama'       => 'Sample ' . $qr,
-                    'jenis'      => $validated['jenis'],
+                    'qrcode' => $qr,
+                    'nama' => 'Sample '.$qr,
+                    'jenis' => $validated['jenis'],
                     'status_akhir' => 'OK',
                     'sudah_scan' => 'Sudah',
-                    'proses_id'  => $sesi->proses_id,
+                    'proses_id' => $sesi->proses_id,
                     'nomor_mesin' => $validated['nomor_mesin'] ?? null,
                     'nomor_mould' => $validated['nomor_mould'] ?? null,
-                    'asal_slip'   => $validated['asal_slip'] ?? null,
-                    'is_sample'   => $validated['is_sample'] ?? false,
+                    'asal_slip' => $validated['asal_slip'] ?? null,
+                    'is_sample' => $validated['is_sample'] ?? false,
                     'kode_sampel' => $validated['is_sample'] ?? false ? ($validated['kode_sampel'] ?? null) : null,
                 ]);
 
@@ -113,7 +114,7 @@ class ScanController extends Controller
                 ->with('scan_qr', $qr)
                 ->with('scan_mode', 'Scan Awal');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Gagal: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Gagal: '.$e->getMessage()]);
         }
     }
 
@@ -154,7 +155,7 @@ class ScanController extends Controller
     public function inproses_store(Request $request)
     {
         $request->validate([
-            'qr'        => 'required|string',
+            'qr' => 'required|string',
             'cacat_ids' => 'nullable|array',
         ]);
 
@@ -175,7 +176,7 @@ class ScanController extends Controller
     public function buang_store(Request $request)
     {
         $request->validate([
-            'qr'        => 'required|string',
+            'qr' => 'required|string',
             'cacat_ids' => 'required|array|min:1',
         ], [
             'cacat_ids.required' => 'Wajib memilih minimal satu jenis cacat untuk membuang produk!',
@@ -192,32 +193,32 @@ class ScanController extends Controller
     {
         $page = match ($mode) {
             'inproses' => 'Scan/CheckingInproses',
-            'buang'    => 'Scan/CheckingBuang',
-            default    => 'Scan/Checking',
+            'buang' => 'Scan/CheckingBuang',
+            default => 'Scan/Checking',
         };
 
         return $this->renderScan($page, [
-            'pilihan_cacat'    => in_array($mode, ['inproses', 'buang']) ? $this->pilihanCacat() : collect(),
+            'pilihan_cacat' => in_array($mode, ['inproses', 'buang']) ? $this->pilihanCacat() : collect(),
             'pilihan_kualitas' => Kualitas::all(['id', 'kualitas']),
-            'pilihan_warna'    => Warna::all(['id', 'warna']),
+            'pilihan_warna' => Warna::all(['id', 'warna']),
         ]);
     }
 
     public function checking_store(Request $request)
     {
         $request->validate([
-            'qr'          => 'required|string',
+            'qr' => 'required|string',
             'kualitas_id' => 'nullable|exists:kualitas,id',
-            'warna_id'    => 'nullable|exists:warna,id',
+            'warna_id' => 'nullable|exists:warna,id',
         ]);
 
         return $this->prosesScan($request, 'OK', function (Produk $produk, SesiKerja $sesi) use ($request) {
             $produk->update([
-                'sudah_scan'  => 'Sudah',
+                'sudah_scan' => 'Sudah',
                 'status_akhir' => 'OK',
-                'proses_id'   => $sesi->proses_id,
+                'proses_id' => $sesi->proses_id,
                 'kualitas_id' => $request->kualitas_id,
-                'warna_id'    => $request->warna_id,
+                'warna_id' => $request->warna_id,
             ]);
         });
     }
@@ -225,19 +226,19 @@ class ScanController extends Controller
     public function checking_inproses_store(Request $request)
     {
         $request->validate([
-            'qr'          => 'required|string',
-            'cacat_ids'   => 'nullable|array',
+            'qr' => 'required|string',
+            'cacat_ids' => 'nullable|array',
             'kualitas_id' => 'nullable|exists:kualitas,id',
-            'warna_id'    => 'nullable|exists:warna,id',
+            'warna_id' => 'nullable|exists:warna,id',
         ]);
 
         return $this->prosesScan($request, 'In Proses', function (Produk $produk, SesiKerja $sesi) use ($request) {
             $produk->update([
-                'sudah_scan'  => 'Sudah',
+                'sudah_scan' => 'Sudah',
                 'status_akhir' => 'In Proses',
-                'proses_id'   => $sesi->proses_id,
+                'proses_id' => $sesi->proses_id,
                 'kualitas_id' => $request->kualitas_id,
-                'warna_id'    => $request->warna_id,
+                'warna_id' => $request->warna_id,
             ]);
         }, $request->cacat_ids ?? []);
     }
@@ -245,21 +246,21 @@ class ScanController extends Controller
     public function checking_buang_store(Request $request)
     {
         $request->validate([
-            'qr'          => 'required|string',
-            'cacat_ids'   => 'required|array|min:1',
+            'qr' => 'required|string',
+            'cacat_ids' => 'required|array|min:1',
             'kualitas_id' => 'nullable|exists:kualitas,id',
-            'warna_id'    => 'nullable|exists:warna,id',
+            'warna_id' => 'nullable|exists:warna,id',
         ], [
             'cacat_ids.required' => 'Wajib memilih minimal satu jenis cacat untuk membuang produk!',
         ]);
 
         return $this->prosesScan($request, 'Buang', function (Produk $produk, SesiKerja $sesi) use ($request) {
             $produk->update([
-                'sudah_scan'  => 'Sudah',
+                'sudah_scan' => 'Sudah',
                 'status_akhir' => 'Buang',
-                'proses_id'   => $sesi->proses_id,
+                'proses_id' => $sesi->proses_id,
                 'kualitas_id' => $request->kualitas_id,
-                'warna_id'    => $request->warna_id,
+                'warna_id' => $request->warna_id,
             ]);
         }, $request->cacat_ids, true);
     }
@@ -289,9 +290,9 @@ class ScanController extends Controller
             return back()
                 ->withErrors(['jenis_mismatch' => "Jenis produk {$request->qr} ({$produk->jenis}) tidak sesuai sesi {$sesi->jenis}. Ubah jenis produk untuk lanjut scan."])
                 ->with('fix_jenis', [
-                    'produk_id'  => $produk->id,
-                    'qrcode'     => $produk->qrcode,
-                    'jenis'      => $produk->jenis,
+                    'produk_id' => $produk->id,
+                    'qrcode' => $produk->qrcode,
+                    'jenis' => $produk->jenis,
                     'sesi_jenis' => $sesi->jenis,
                 ]);
         }
@@ -299,6 +300,17 @@ class ScanController extends Controller
         // Produk yang sudah BUANG bersifat final — tidak boleh diproses lagi
         if ($produk->status_akhir === 'Buang') {
             return back()->withErrors(['qr' => "Produk {$request->qr} sudah berstatus BUANG dan tidak bisa diproses lagi!"]);
+        }
+
+        $invalidCacat = Cacat::whereIn('id', $cacatIds)
+            ->where(function ($query) use ($sesi) {
+                $query->where('jenis', $sesi->jenis)
+                    ->whereHas('aturan_penolakans', fn ($q) => $q->where('proses_pemeriksa', $sesi->proses_id));
+            })
+            ->count() !== count(array_unique(array_map('intval', $cacatIds)));
+
+        if ($invalidCacat) {
+            return back()->withErrors(['cacat_ids' => 'Pilihan cacat tidak sesuai jenis produk atau proses sesi aktif.']);
         }
 
         // Cek urutan proses: semua proses aktif sebelumnya (jenis sesuai) harus sudah discan
@@ -371,7 +383,7 @@ class ScanController extends Controller
                 ->with('scan_qr', $request->qr)
                 ->with('scan_mode', $modeLabel ?? $statusKondisi);
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Gagal menyimpan data: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Gagal menyimpan data: '.$e->getMessage()]);
         }
     }
 
@@ -381,12 +393,12 @@ class ScanController extends Controller
     private function catatPengerjaan(Produk $produk, SesiKerja $sesi, string $statusKondisi, ?int $kualitasId = null)
     {
         $data = [
-            'user_id'        => Auth::id(),
-            'produk_id'      => $produk->id,
-            'sesi_kerja_id'  => $sesi->id,
-            'proses_id'      => $sesi->proses_id,
+            'user_id' => Auth::id(),
+            'produk_id' => $produk->id,
+            'sesi_kerja_id' => $sesi->id,
+            'proses_id' => $sesi->proses_id,
             'status_kondisi' => $statusKondisi,
-            'kualitas_id'    => $kualitasId,
+            'kualitas_id' => $kualitasId,
         ];
 
         $leader = PengerjaanProduk::create($data);
@@ -423,11 +435,11 @@ class ScanController extends Controller
             }
 
             $pengerjaanLeader->pengerjaan_cacats()->create([
-                'cacat_id'      => $cid,
-                'user_scan_id'  => Auth::id(),
+                'cacat_id' => $cid,
+                'user_scan_id' => Auth::id(),
                 'proses_scan_id' => $sesi->proses_id,
-                'user_pj_id'    => $userPJId,
-                'proses_pj_id'  => $prosesPJId,
+                'user_pj_id' => $userPJId,
+                'proses_pj_id' => $prosesPJId,
             ]);
         }
     }
@@ -437,7 +449,8 @@ class ScanController extends Controller
         $sesi = $this->sesiAktif();
 
         return $sesi
-            ? Cacat::whereHas('aturan_penolakans', fn ($q) => $q->where('proses_pemeriksa', $sesi->proses_id))
+            ? Cacat::where('jenis', $sesi->jenis)
+                ->whereHas('aturan_penolakans', fn ($q) => $q->where('proses_pemeriksa', $sesi->proses_id))
                 ->select(['id', 'cacat'])
                 ->distinct()
                 ->get()

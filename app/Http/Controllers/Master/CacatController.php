@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cacat;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Cacat;
 
 class CacatController extends Controller
 {
@@ -21,7 +21,7 @@ class CacatController extends Controller
 
         return Inertia::render('Master/Cacats/Index', [
             'cacats' => $cacats,
-            'filters' => $request->only(['search'])
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -34,12 +34,13 @@ class CacatController extends Controller
     {
         $request->validate([
             'cacat' => 'required|string|max:255|unique:cacat,cacat',
+            'jenis' => 'required|in:Body,Tangki',
         ], [
             'cacat.required' => 'Cacat wajib diisi.',
             'cacat.unique' => 'Jenis cacat ini sudah terdaftar.',
         ]);
 
-        Cacat::create($request->only('cacat'));
+        Cacat::create($request->only('cacat', 'jenis'));
 
         return redirect()->route('cacats.index')->with('message', 'Data cacat berhasil ditambahkan.');
     }
@@ -47,17 +48,18 @@ class CacatController extends Controller
     public function edit(Cacat $cacat)
     {
         return Inertia::render('Master/Cacats/Edit', [
-            'cacat' => $cacat
+            'cacat' => $cacat,
         ]);
     }
 
     public function update(Request $request, Cacat $cacat)
     {
         $request->validate([
-            'cacat' => 'required|string|max:255|unique:cacat,cacat,' . $cacat->id,
+            'cacat' => 'required|string|max:255|unique:cacat,cacat,'.$cacat->id,
+            'jenis' => 'required|in:Body,Tangki',
         ]);
 
-        $cacat->update($request->only('cacat'));
+        $cacat->update($request->only('cacat', 'jenis'));
 
         return redirect()->route('cacats.index')->with('message', 'Data cacat berhasil diperbarui.');
     }
@@ -65,6 +67,7 @@ class CacatController extends Controller
     public function destroy(Cacat $cacat)
     {
         $cacat->delete();
+
         return redirect()->route('cacats.index')->with('message', 'Data cacat berhasil dihapus.');
     }
 }

@@ -31,8 +31,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 defineOptions({ layout: AuthenticatedLayout });
-const props = defineProps<{ cacat: { id: number; cacat: string } }>();
-const form = useForm({ cacat: props.cacat.cacat });
+const props = defineProps<{ cacat: { id: number; cacat: string; jenis: "Body" | "Tangki" } }>();
+const form = useForm({ cacat: props.cacat.cacat, jenis: props.cacat.jenis });
 </script>
 
 <template>
@@ -116,6 +116,14 @@ const form = useForm({ cacat: props.cacat.cacat });
                                 v-model="form.cacat"
                                 class=""
                             />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="jenis">Jenis Produk</Label>
+                            <select id="jenis" v-model="form.jenis" class="h-10 rounded-md border bg-background px-3 text-sm">
+                                <option value="Body">Body</option>
+                                <option value="Tangki">Tangki</option>
+                            </select>
+                            <p v-if="form.errors.jenis" class="text-sm text-destructive">{{ form.errors.jenis }}</p>
                         </div>
                         <Button
                             type="submit"
