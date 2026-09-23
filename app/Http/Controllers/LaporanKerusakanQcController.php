@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kualitas;
 use App\Models\PengerjaanProduk;
 use App\Models\Proses;
 use App\Support\CutOff;
@@ -17,9 +18,14 @@ class LaporanKerusakanQcController extends Controller
         $bulan = (int) ($request->input('bulan') ?: now()->month);
         $tahun = (int) ($request->input('tahun') ?: now()->year);
         $prosesId = $request->integer('proses_id') ?: null;
+        $kualitasId = $request->input('kualitas_id', 'belum_ditentukan');
         $proses = Proses::query()->where('is_active', true)->whereHas('departemen', fn ($q) => $q->where('departemen', 'QC'))->orderBy('urutan')->get(['id', 'proses']);
+        $kualitas = Kualitas::query()->orderBy('id')->get(['id', 'kualitas']);
         if (! $proses->contains('id', $prosesId)) {
             $prosesId = $proses->first()?->id;
+        }
+        if ($kualitasId !== 'belum_ditentukan' && ! $kualitas->contains('id', (int) $kualitasId)) {
+            $kualitasId = 'belum_ditentukan';
         }
         $range = CutOff::rangeBulan($bulan, $tahun);
         $latest = PengerjaanProduk::query()
@@ -29,6 +35,7 @@ class LaporanKerusakanQcController extends Controller
             ->where('pengerjaan_produk.proses_id', $prosesId)
             ->where('pengerjaan_produk.created_at', '>=', $range[0])
             ->where('pengerjaan_produk.created_at', '<', $range[1])
+            ->when($kualitasId === 'belum_ditentukan', fn ($q) => $q->whereNull('pengerjaan_produk.kualitas_id'), fn ($q) => $q->where('pengerjaan_produk.kualitas_id', $kualitasId))
             ->groupBy('pengerjaan_produk.produk_id');
         $output = DB::query()->fromSub(clone $latest, 'latest_output')->count();
         $cacat = DB::table('pengerjaan_cacat')
@@ -39,6 +46,7 @@ class LaporanKerusakanQcController extends Controller
             ->orderBy('cacat.cacat')->get();
         $days = Carbon::create($tahun, $bulan, 1)->daysInMonth;
         $rows = $cacat->groupBy('nama')->map(fn ($items, $nama) => ['nama' => $nama, 'hari' => $items->pluck('jumlah', 'hari'), 'total' => (int) $items->sum('jumlah'), 'persentase' => $output ? round($items->sum('jumlah') / $output * 100, 2) : 0])->values();
-        return Inertia::render('LaporanKerusakanQc/Index', ['proses' => $proses, 'rows' => $rows, 'output' => $output, 'bulan' => $bulan, 'tahun' => $tahun, 'proses_id' => $prosesId, 'days' => $days]);
+
+        return Inertia::render('LaporanKerusakanQc/Index', ['proses' => $proses, 'kualitas' => $kualitas, 'rows' => $rows, 'output' => $output, 'bulan' => $bulan, 'tahun' => $tahun, 'proses_id' => $prosesId, 'kualitas_id' => $kualitasId, 'days' => $days]);
     }
 }
