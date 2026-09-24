@@ -36,18 +36,24 @@ const props = defineProps<{
         to: number;
         total: number;
     };
-    filters: { search: string };
+    filters: { search: string; jenis: string; proses_pemeriksa: number | null; proses_buang: number | null; proses_toleransi: number | null };
+    proses: { id: number; proses: string }[];
+    counts: { total: number; body: number; tangki: number; pemeriksa: number; buang: number; toleransi: number };
 }>();
 
 const search = ref(props.filters.search || "");
+const jenis = ref(props.filters.jenis || "semua");
+const prosesPemeriksa = ref(String(props.filters.proses_pemeriksa || ""));
+const prosesBuang = ref(String(props.filters.proses_buang || ""));
+const prosesToleransi = ref(String(props.filters.proses_toleransi || ""));
 let timeout: any;
 
-watch(search, (value) => {
+watch([search, jenis, prosesPemeriksa, prosesBuang, prosesToleransi], () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
         router.get(
             route("aturanpenolakans.index"),
-            { search: value },
+            { search: search.value, jenis: jenis.value, proses_pemeriksa: prosesPemeriksa.value, proses_buang: prosesBuang.value, proses_toleransi: prosesToleransi.value },
             { preserveState: true, replace: true },
         );
     }, 500);
@@ -76,8 +82,8 @@ const cleanLabel = (label: string) => {
                     <IconGavel class="size-6 text-primary" />
                     Aturan Penolakan Cacat
                 </CardTitle>
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <div class="relative w-full md:w-72">
+                <div class="grid w-full grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:flex xl:w-auto xl:flex-wrap xl:items-center">
+                    <div class="relative min-w-0 xl:w-72">
                         <IconSearch
                             class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
                         />
@@ -94,6 +100,10 @@ const cleanLabel = (label: string) => {
                             <IconX class="size-4" />
                         </button>
                     </div>
+                    <select v-model="jenis" class="h-10 min-w-0 w-full rounded-md border bg-background px-3 text-sm xl:w-auto"><option value="semua">Semua Jenis</option><option value="Body">Body</option><option value="Tangki">Tangki</option></select>
+                    <select v-model="prosesPemeriksa" class="h-10 min-w-0 w-full rounded-md border bg-background px-3 text-sm xl:w-auto"><option value="">Semua Pemeriksa</option><option v-for="item in proses" :key="item.id" :value="String(item.id)">{{ item.proses }}</option></select>
+                    <select v-model="prosesToleransi" class="h-10 min-w-0 w-full rounded-md border bg-background px-3 text-sm xl:w-auto"><option value="">Semua Toleransi</option><option v-for="item in proses" :key="item.id" :value="String(item.id)">{{ item.proses }}</option></select>
+                    <select v-model="prosesBuang" class="h-10 min-w-0 w-full rounded-md border bg-background px-3 text-sm xl:w-auto"><option value="">Semua Buang</option><option v-for="item in proses" :key="item.id" :value="String(item.id)">{{ item.proses }}</option></select>
                     <Button as-child class="bg-primary hover:bg-primary/90">
                         <Link :href="route('aturanpenolakans.create')">
                             <IconPlus class="mr-2 size-4" />Tambah
@@ -103,6 +113,14 @@ const cleanLabel = (label: string) => {
             </CardHeader>
 
             <CardContent>
+                <div class="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+                    <div class="rounded-md border p-3 text-center"><div class="text-xs text-muted-foreground">Total</div><div class="text-xl font-bold">{{ counts.total }}</div></div>
+                    <div class="rounded-md border p-3 text-center"><div class="text-xs text-muted-foreground">Body</div><div class="text-xl font-bold">{{ counts.body }}</div></div>
+                    <div class="rounded-md border p-3 text-center"><div class="text-xs text-muted-foreground">Tangki</div><div class="text-xl font-bold">{{ counts.tangki }}</div></div>
+                    <div class="rounded-md border p-3 text-center"><div class="text-xs text-muted-foreground">Dep. Pemeriksa</div><div class="text-xl font-bold">{{ counts.pemeriksa }}</div></div>
+                    <div class="rounded-md border p-3 text-center"><div class="text-xs text-muted-foreground">Dep. Buang</div><div class="text-xl font-bold">{{ counts.buang }}</div></div>
+                    <div class="rounded-md border p-3 text-center"><div class="text-xs text-muted-foreground">Dep. Toleransi</div><div class="text-xl font-bold">{{ counts.toleransi }}</div></div>
+                </div>
                 <div class="rounded-lg border overflow-hidden">
                     <Table>
                         <TableHeader>
