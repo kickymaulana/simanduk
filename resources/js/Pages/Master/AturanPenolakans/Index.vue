@@ -126,7 +126,10 @@ const cleanLabel = (label: string) => {
                                 :key="item.id"
                             >
                                 <TableCell class="font-bold text-primary">
-                                    {{ item.cacat.cacat }}
+                                    <div class="flex items-center gap-2">
+                                        {{ item.cacat.cacat }}
+                                        <Badge variant="outline">{{ item.cacat.jenis }}</Badge>
+                                    </div>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline">{{ item.proses_toleransi.proses }}</Badge>

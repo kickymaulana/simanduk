@@ -69,7 +69,8 @@ const openCacat = ref(false);
 
 // Computed untuk menampilkan label cacat yang sedang dipilih (berdasarkan props awal atau perubahan form)
 const selectedCacatLabel = computed(() => {
-    return props.cacats.find((c) => c.id.toString() === form.cacat_id)?.cacat || "Pilih Jenis Cacat...";
+    const cacat = props.cacats.find((c) => c.id.toString() === form.cacat_id);
+    return cacat ? `${cacat.cacat} — ${cacat.jenis}` : "Pilih Jenis Cacat...";
 });
 
 const submit = () => {
@@ -163,7 +164,7 @@ const submit = () => {
                                                     <CommandItem
                                                         v-for="c in cacats"
                                                         :key="c.id"
-                                                        :value="c.cacat"
+                                                        :value="`${c.cacat} ${c.jenis}`"
                                                         @select="() => {
                                                             form.cacat_id = c.id.toString();
                                                             openCacat = false;
@@ -175,7 +176,7 @@ const submit = () => {
                                                                 form.cacat_id === c.id.toString() ? 'opacity-100' : 'opacity-0'
                                                             )"
                                                         />
-                                                        {{ c.cacat }}
+                                                        {{ c.cacat }} — {{ c.jenis }}
                                                     </CommandItem>
                                                 </CommandGroup>
                                             </CommandList>
