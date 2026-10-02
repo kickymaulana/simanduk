@@ -18,10 +18,15 @@ const props = defineProps<{
 
 const STORAGE_KEY = "scan_checking_cacat_ids";
 const nativeInput = ref<HTMLInputElement | null>(null);
+const validCacatIds = new Set(props.pilihan_cacat.map((item) => item.id));
+const savedCacatIds = (JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]") as number[])
+    .filter((id) => validCacatIds.has(id));
+
+localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCacatIds));
 
 const form = useForm({
     qr: "",
-    cacat_ids: JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]") as number[],
+    cacat_ids: savedCacatIds,
     kualitas_id: null as number | null,
     warna_id: null as number | null,
 });
@@ -44,6 +49,12 @@ const focusInput = (attempt = 0) => {
 onMounted(() => focusInput());
 watch(() => form.processing, (proc) => { if (!proc) focusInput(); });
 
+const resetCacat = () => {
+    form.cacat_ids = [];
+    localStorage.removeItem(STORAGE_KEY);
+    focusInput();
+};
+
 const toggleCacat = (id: number) => {
     const idx = form.cacat_ids.indexOf(id);
     idx > -1 ? form.cacat_ids.splice(idx, 1) : form.cacat_ids.push(id);
@@ -56,7 +67,7 @@ const handleScan = () => {
         preserveScroll: true,
         onSuccess: () => {
             form.qr = "";
-            focusInput();
+            resetCacat();
         },
         onError: (err) => {
             // Overlay tengah (ScanSuccessOverlay) menampilkan error
@@ -89,9 +100,10 @@ defineOptions({ layout: AuthenticatedLayout });
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="md:col-span-2 flex items-center bg-orange-50 border-2 border-orange-200 p-2 rounded-xl shadow-inner">
-                <IconScan class="size-6 text-orange-500 ml-2 mr-3" />
-                <input
+            <div class="md:col-span-2">
+                <div class="flex items-center bg-orange-50 border-2 border-orange-200 p-2 rounded-xl shadow-inner">
+                    <IconScan class="size-6 text-orange-500 ml-2 mr-3" />
+                    <input
                     ref="nativeInput"
                     v-model="form.qr"
                     :disabled="form.processing"
@@ -103,6 +115,10 @@ defineOptions({ layout: AuthenticatedLayout });
                     @blur="focusInput"
                     autocomplete="off"
                 />
+                </div>
+                <p v-if="form.errors.qr || form.errors.error || form.errors.cacat_ids || form.errors.jenis_mismatch" class="mt-2 text-sm text-red-600 text-center font-bold">
+                    {{ form.errors.qr || form.errors.error || form.errors.cacat_ids || form.errors.jenis_mismatch }}
+                </p>
             </div>
             <div class="bg-orange-900 text-white p-3 rounded-xl flex flex-col justify-center items-center shadow-lg border-b-4 border-orange-950">
                 <span class="text-[9px] uppercase opacity-70 tracking-tighter font-bold">Sesi / Proses</span>
@@ -114,9 +130,11 @@ defineOptions({ layout: AuthenticatedLayout });
         </div>
 
         <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-            <div class="bg-orange-600 px-3 py-1.5 flex items-center gap-2">
-                <IconAlertTriangle class="size-3 text-white" />
-                <span class="text-[10px] font-bold text-white uppercase">Cacat (Opsional)</span>
+            <div class="bg-orange-600 px-3 py-1.5 flex items-center justify-between gap-2">
+                <span class="flex items-center gap-2 text-[10px] font-bold text-white uppercase">
+                    <IconAlertTriangle class="size-3" /> Cacat (Opsional)
+                </span>
+                <button type="button" @click="resetCacat" class="text-[10px] font-bold text-white underline">BERSIHKAN PILIHAN</button>
             </div>
             <div class="p-3 flex flex-wrap gap-2 max-h-[180px] overflow-y-auto">
                 <button
