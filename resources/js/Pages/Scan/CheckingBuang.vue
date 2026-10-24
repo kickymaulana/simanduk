@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { useForm, Head, Link } from "@inertiajs/vue3";
-import { ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { Button } from "@/components/ui/button";
 import { toast } from "vue-sonner";
 import {
     IconScan, IconLoader2, IconArrowLeft, IconCheck,
-    IconAlertTriangle, IconSettings, IconPalette, IconClock
+    IconAlertTriangle, IconTag, IconPalette, IconClock
 } from "@tabler/icons-vue";
+
+type Merk = {
+    id: number;
+    merk: string;
+    kualitas: { id: number; kualitas: string };
+};
 
 const props = defineProps<{
     sesi: any;
     pilihan_cacat: Array<{ id: number; cacat: string }>;
-    pilihan_kualitas: Array<{ id: number; kualitas: string }>;
+    pilihan_merk: Merk[];
     pilihan_warna: Array<{ id: number; warna: string }>;
 }>();
 
@@ -22,9 +28,28 @@ const nativeInput = ref<HTMLInputElement | null>(null);
 const form = useForm({
     qr: "",
     cacat_ids: JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]") as number[],
-    kualitas_id: null as number | null,
+    merk_id: null as number | null,
     warna_id: null as number | null,
 });
+
+const selectedMerk = computed(() => props.pilihan_merk.find((merk) => merk.id === form.merk_id));
+
+const gradeLabel = (grade: string) => {
+    if (grade.toUpperCase().includes("KW3")) return "KW3";
+    if (grade.toUpperCase().includes("SG")) return "SG";
+    if (grade.toUpperCase().includes("AB")) return "AB";
+    if (grade.toUpperCase().includes("FG")) return "FG";
+    return grade;
+};
+
+const gradeClass = (grade: string) => {
+    const label = gradeLabel(grade);
+    if (label === "FG") return "bg-green-100 text-green-700 border-green-200";
+    if (label === "SG") return "bg-blue-100 text-blue-700 border-blue-200";
+    if (label === "AB") return "bg-amber-100 text-amber-800 border-amber-200";
+    if (label === "KW3") return "bg-red-100 text-red-700 border-red-200";
+    return "bg-slate-100 text-slate-700 border-slate-200";
+};
 
 watch(() => form.cacat_ids, (newVal) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
@@ -139,21 +164,25 @@ defineOptions({ layout: AuthenticatedLayout });
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-                <div class="bg-blue-600 px-3 py-1.5 flex items-center gap-2">
-                    <IconSettings class="size-3 text-white" />
-                    <span class="text-[10px] font-bold text-white uppercase">Tentukan Kualitas</span>
+                <div class="bg-red-600 px-3 py-1.5 flex items-center gap-2">
+                    <IconTag class="size-3 text-white" />
+                    <span class="text-[10px] font-bold text-white uppercase">Pilih Merek</span>
                 </div>
-                <div class="p-3 flex flex-wrap gap-2">
+                <div class="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <button
-                        v-for="k in pilihan_kualitas" :key="k.id"
+                        v-for="merk in pilihan_merk" :key="merk.id"
                         type="button"
-                        @click="form.kualitas_id = (form.kualitas_id === k.id ? null : k.id); focusInput()"
-                        :class="['px-5 py-3 rounded-xl text-xs font-bold border-2 transition-all',
-                                 form.kualitas_id === k.id ? 'bg-blue-600 border-blue-700 text-white shadow-md scale-105' : 'bg-slate-50 border-slate-100 text-slate-500']"
+                        @click="form.merk_id = merk.id; focusInput()"
+                        :class="['min-h-20 px-4 py-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2',
+                                 form.merk_id === merk.id ? 'bg-red-600 border-red-700 text-white shadow-md scale-[1.02]' : 'bg-slate-50 border-slate-100 text-slate-700']"
                     >
-                        {{ k.kualitas }}
+                        <span class="text-base font-black">{{ merk.merk }}</span>
+                        <span :class="['px-2 py-0.5 rounded-full border text-[10px] font-black', gradeClass(merk.kualitas.kualitas)]">
+                            {{ gradeLabel(merk.kualitas.kualitas) }}
+                        </span>
                     </button>
                 </div>
+                <p v-if="form.errors.merk_id" class="px-3 pb-3 text-xs font-bold text-red-600">{{ form.errors.merk_id }}</p>
             </div>
 
             <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
@@ -173,6 +202,11 @@ defineOptions({ layout: AuthenticatedLayout });
                     </button>
                 </div>
             </div>
+        </div>
+
+        <div class="bg-red-50 border border-red-200 p-3 rounded-xl text-xs text-red-800">
+            Merek: <strong>{{ selectedMerk?.merk || "Belum dipilih" }}</strong> · Grade:
+            <strong>{{ selectedMerk ? gradeLabel(selectedMerk.kualitas.kualitas) : "-" }}</strong>
         </div>
 
         <div v-if="form.processing" class="fixed inset-0 bg-red-900/40 backdrop-blur-sm z-50 flex items-center justify-center">

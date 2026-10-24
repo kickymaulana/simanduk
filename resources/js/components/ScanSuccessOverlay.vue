@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from "vue";
+import { ref, watch, onBeforeUnmount, onMounted } from "vue";
 import { usePage, router } from "@inertiajs/vue3";
 
 const page = usePage();
@@ -8,8 +8,9 @@ const show = ref(false);
 const isError = ref(false);
 const qr = ref("");
 const mode = ref("");
-const counter = ref(0);
+const counter = ref<number | null>(null);
 const message = ref("");
+const detail = ref<any>(null);
 
 const fixState = ref<null | { produk_id: number; qrcode: string; jenis: string; sesi_jenis: string }>(null);
 const fixJenis = ref("Body");
@@ -61,7 +62,8 @@ watch(
             isError.value = false;
             qr.value = flash.scan_qr;
             mode.value = flash.scan_mode || "Berhasil";
-            counter.value = (page.props as any).scan_counter ?? 0;
+            counter.value = (page.props as any).scan_counter ?? null;
+            detail.value = flash.scan_detail ?? null;
             show.value = true;
 
             if (timer) clearTimeout(timer);
@@ -77,11 +79,13 @@ watch(
     (errors: any) => {
         if (fixState.value) return;
 
-        const err = errors?.qr || errors?.error;
-        if (err && page.url.includes("/scan/")) {
+        const isScanPacking = page.url.includes("/scan-packing");
+        const err = errors?.qr || errors?.qrcode_kardus || errors?.accessories || errors?.error;
+        if (err && (page.url.includes("/scan/") || isScanPacking)) {
             isError.value = true;
             message.value = err;
-            qr.value = "";
+            qr.value = isScanPacking ? errors?.qrcode_kardus ? "" : "Packing" : "";
+            detail.value = null;
             show.value = true;
 
             if (timer) clearTimeout(timer);
@@ -91,7 +95,22 @@ watch(
     { deep: true }
 );
 
+const showPackingError = (event: Event) => {
+    const customEvent = event as CustomEvent<{ message: string; qr?: string }>;
+    isError.value = true;
+    message.value = customEvent.detail.message;
+    qr.value = customEvent.detail.qr || "";
+    detail.value = null;
+    show.value = true;
+
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(hide, 2200);
+};
+
+onMounted(() => window.addEventListener("scan-packing-error", showPackingError));
+
 onBeforeUnmount(() => {
+    window.removeEventListener("scan-packing-error", showPackingError);
     if (timer) clearTimeout(timer);
 });
 </script>
@@ -171,7 +190,18 @@ onBeforeUnmount(() => {
                     <div class="flex flex-col gap-1">
                         <h1 class="text-4xl font-black uppercase tracking-tight text-green-600">{{ mode }}</h1>
                         <p v-if="qr" class="font-mono text-2xl font-bold tracking-widest text-slate-800">{{ qr }}</p>
-                        <p class="text-base font-semibold text-slate-500">Scan ke-{{ counter }} (sesi ini)</p>
+                        <p v-if="counter !== null" class="text-base font-semibold text-slate-500">Scan ke-{{ counter }} (sesi ini)</p>
+                        <div v-if="detail" class="mt-3 space-y-2 text-sm text-slate-600">
+                            <p class="font-semibold">
+                                {{ detail.jenis }} · {{ detail.kualitas || "-" }} · {{ detail.merk || "-" }} · {{ detail.warna || "-" }} · {{ detail.gudang || "-" }}
+                            </p>
+                            <p class="font-bold text-slate-800">Total aksesori: {{ detail.total_aksesori }}</p>
+                            <div class="max-w-lg text-left">
+                                <p v-for="item in detail.accessories" :key="`${item.part_number}-${item.quantity}`">
+                                    {{ item.part_number }} - {{ item.description }} ({{ item.quantity }})
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </template>
 

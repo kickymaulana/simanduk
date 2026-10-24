@@ -39,12 +39,12 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user() ? [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
-                'avatar' => $request->user()->avatar, // sesuaikan dengan kolommu
-                'departemen' => $request->user()->departemen?->departemen,
-            ] : null,
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'avatar' => $request->user()->avatar, // sesuaikan dengan kolommu
+                    'departemen' => $request->user()->departemen?->departemen,
+                ] : null,
                 'roles' => $request->user() ? $request->user()->getRoleNames() : [],
             ],
             'flash' => [
@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
                 'scan_qr' => $request->session()->get('scan_qr'),
                 'scan_mode' => $request->session()->get('scan_mode'),
+                'scan_detail' => $request->session()->get('scan_detail'),
                 'fix_jenis' => $request->session()->get('fix_jenis'),
             ],
         ];

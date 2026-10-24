@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\Guarded;
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -35,6 +34,11 @@ class Produk extends Model
         return $this->belongsTo(Kualitas::class, 'kualitas_id');
     }
 
+    public function merk(): BelongsTo
+    {
+        return $this->belongsTo(Merk::class, 'merk_id');
+    }
+
     public function warna(): BelongsTo
     {
         return $this->belongsTo(Warna::class, 'warna_id');
@@ -44,5 +48,4 @@ class Produk extends Model
     {
         return $this->belongsTo(Oven::class, 'oven_id');
     }
-
 }

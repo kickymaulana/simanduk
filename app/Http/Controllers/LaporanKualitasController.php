@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Kualitas;
 use App\Models\PengerjaanProduk;
 use App\Models\Proses;
 use App\Support\CutOff;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -42,7 +42,7 @@ class LaporanKualitasController extends Controller
                 ->where('pengerjaan_produk.created_at', '<', $end)
                 ->join('produk', 'produk.id', '=', 'pengerjaan_produk.produk_id')
                 ->select(
-                    DB::raw('DATE(' . CutOff::expr('pengerjaan_produk.created_at') . ') as tanggal'),
+                    DB::raw('DATE('.CutOff::expr('pengerjaan_produk.created_at').') as tanggal'),
                     'produk.jenis',
                     'pengerjaan_produk.status_kondisi',
                     'pengerjaan_produk.kualitas_id',
@@ -62,12 +62,12 @@ class LaporanKualitasController extends Controller
                 // Skip tanggal yang tidak punya data sama sekali (Body & Tangki)
                 $adaData = false;
                 foreach (['Body', 'Tangki'] as $jenis) {
-                    if (!empty($raw[$tanggal][$jenis])) {
+                    if (! empty($raw[$tanggal][$jenis])) {
                         $adaData = true;
                         break;
                     }
                 }
-                if (!$adaData) {
+                if (! $adaData) {
                     continue;
                 }
 
@@ -113,7 +113,7 @@ class LaporanKualitasController extends Controller
         $summary['reject_persen'] = $this->persen($summary['reject'], $summary['input']);
 
         $minYear = (int) (PengerjaanProduk::where('proses_id', $qcProses->id ?? 0)
-            ->min(DB::raw('YEAR(' . CutOff::expr('created_at') . ')'))) ?: $now->year;
+            ->min(DB::raw(CutOff::yearExpr('created_at')))) ?: $now->year;
         $daftarTahun = collect(range($minYear, $now->year))->reverse()->values()->all();
 
         return Inertia::render('LaporanKualitas/Index', [
@@ -135,6 +135,6 @@ class LaporanKualitasController extends Controller
 
     private function persen($angka, $total): string
     {
-        return $total > 0 ? round($angka / $total * 100, 1) . '%' : '0%';
+        return $total > 0 ? round($angka / $total * 100, 1).'%' : '0%';
     }
 }

@@ -27,6 +27,9 @@ import {
     IconArrowBackUp,
     IconSettings,
     IconChartBar,
+    IconBuildingWarehouse,
+    IconBrandProducthunt,
+    IconPackage,
 } from "@tabler/icons-vue";
 
 import Master from "@/components/Master.vue";
@@ -80,6 +83,13 @@ const filteredNavMain = computed(() => {
     });
 
     menus.push({
+        title: "Scan Packing",
+        url: route("scan.packing.index"),
+        icon: IconPackage,
+        root: "ScanPacking",
+    });
+
+    menus.push({
         title: "Riwayat Scan Masuk",
         url: route("riwayat.scan.masuk"),
         icon: IconHistory,
@@ -108,6 +118,18 @@ const filteredNavMain = computed(() => {
                 url: route("laporan.kualitas"),
                 icon: IconPalette,
                 root: "LaporanKualitas",
+            },
+            {
+                title: "Laporan Scan Packing",
+                url: route("laporan.scan.packing"),
+                icon: IconPackage,
+                root: "LaporanScanPacking",
+            },
+            {
+                title: "Laporan Stok Aksesori",
+                url: route("laporan.stok.aksesori"),
+                icon: IconBoxSeam,
+                root: "LaporanStokAksesori",
             },
             {
                 title: "Rincian Kerusakan QC",
@@ -276,6 +298,30 @@ const masterData = [
         url: route("warna.index"),
         icon: IconPalette,
         root: "Master/Warna",
+    },
+    {
+        name: "Merk",
+        url: route("merk.index"),
+        icon: IconBrandProducthunt,
+        root: "Master/Merk",
+    },
+    {
+        name: "Gudang",
+        url: route("gudang.index"),
+        icon: IconBuildingWarehouse,
+        root: "Master/Gudang",
+    },
+    {
+        name: "Aksesori",
+        url: route("aksesori.index"),
+        icon: IconPackage,
+        root: "Master/Aksesori",
+    },
+    {
+        name: "Stok Aksesori",
+        url: route("stok.aksesori.index"),
+        icon: IconPackage,
+        root: "StokAksesori",
     },
 ];
 </script>

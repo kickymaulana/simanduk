@@ -21,7 +21,24 @@ class CutOff
     /** Ekspresi SQL: timestamp digeser mundur sesuai cut off (utk di-select/group). */
     public static function expr(string $column): string
     {
-        return "DATE_SUB({$column}, INTERVAL " . self::jam() . " HOUR)";
+        $jam = self::jam();
+
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return "datetime({$column}, '-{$jam} hours')";
+        }
+
+        return "DATE_SUB({$column}, INTERVAL {$jam} HOUR)";
+    }
+
+    public static function yearExpr(string $column): string
+    {
+        $expr = self::expr($column);
+
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return "CAST(strftime('%Y', {$expr}) AS INTEGER)";
+        }
+
+        return "YEAR({$expr})";
     }
 
     /** Rentang [start, end) bulan produksi — kolom mentah sudah digeser dulu oleh cut off. */

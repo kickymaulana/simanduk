@@ -3,17 +3,22 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\KoreksiScanController;
-use App\Http\Controllers\LaporanKualitasController;
-use App\Http\Controllers\LaporanKerusakanQcController;
-use App\Http\Controllers\LaporanProdukBuangController;
 use App\Http\Controllers\DataRejectSanitaryController;
+use App\Http\Controllers\KoreksiScanController;
+use App\Http\Controllers\LaporanKerusakanQcController;
+use App\Http\Controllers\LaporanKualitasController;
+use App\Http\Controllers\LaporanProdukBuangController;
 use App\Http\Controllers\LaporanScanController;
+use App\Http\Controllers\LaporanScanPackingController;
+use App\Http\Controllers\LaporanStokAksesoriController;
 use App\Http\Controllers\LaporanTraceController;
+use App\Http\Controllers\Master\AksesoriController;
 use App\Http\Controllers\Master\AturanPenolakanController;
 use App\Http\Controllers\Master\CacatController;
 use App\Http\Controllers\Master\DepartemenController;
+use App\Http\Controllers\Master\GudangController;
 use App\Http\Controllers\Master\KualitasController;
+use App\Http\Controllers\Master\MerkController;
 use App\Http\Controllers\Master\OvenController;
 use App\Http\Controllers\Master\ProsesController;
 use App\Http\Controllers\Master\RoleController;
@@ -28,8 +33,10 @@ use App\Http\Controllers\ProsesProduksiController;
 use App\Http\Controllers\QrBelumDiscanController;
 use App\Http\Controllers\RiwayatScanMasukController;
 use App\Http\Controllers\ScanController;
+use App\Http\Controllers\ScanPackingController;
 use App\Http\Controllers\SesiKerjaController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\StokAksesoriController;
 use App\Http\Controllers\StokController;
 use App\Http\Controllers\TemuanRejectQcController;
 use App\Http\Controllers\TotalPengerjaanUserController;
@@ -121,6 +128,30 @@ Route::middleware('auth', 'role:admin')->group(function () {
     Route::put('master/warna/{warna}/edit', [WarnaController::class, 'update'])->name('warna.update');
     Route::delete('master/warna/{warna}', [WarnaController::class, 'destroy'])->name('warna.destroy');
 
+    Route::get('master/merk', [MerkController::class, 'index'])->name('merk.index');
+    Route::get('master/merk/create', [MerkController::class, 'create'])->name('merk.create');
+    Route::post('master/merk', [MerkController::class, 'store'])->name('merk.store');
+    Route::get('master/merk/{merk}/edit', [MerkController::class, 'edit'])->name('merk.edit');
+    Route::put('master/merk/{merk}', [MerkController::class, 'update'])->name('merk.update');
+    Route::post('master/merk/{merk}/toggle-active', [MerkController::class, 'toggleActive'])->name('merk.toggle_active');
+
+    Route::get('master/gudang', [GudangController::class, 'index'])->name('gudang.index');
+    Route::get('master/gudang/create', [GudangController::class, 'create'])->name('gudang.create');
+    Route::post('master/gudang', [GudangController::class, 'store'])->name('gudang.store');
+    Route::get('master/gudang/{gudang}/edit', [GudangController::class, 'edit'])->name('gudang.edit');
+    Route::put('master/gudang/{gudang}', [GudangController::class, 'update'])->name('gudang.update');
+    Route::post('master/gudang/{gudang}/toggle-active', [GudangController::class, 'toggleActive'])->name('gudang.toggle_active');
+
+    Route::get('master/aksesori', [AksesoriController::class, 'index'])->name('aksesori.index');
+    Route::get('master/aksesori/create', [AksesoriController::class, 'create'])->name('aksesori.create');
+    Route::post('master/aksesori', [AksesoriController::class, 'store'])->name('aksesori.store');
+    Route::get('master/aksesori/{aksesori}/edit', [AksesoriController::class, 'edit'])->name('aksesori.edit');
+    Route::put('master/aksesori/{aksesori}', [AksesoriController::class, 'update'])->name('aksesori.update');
+    Route::post('master/aksesori/{aksesori}/toggle-active', [AksesoriController::class, 'toggleActive'])->name('aksesori.toggle_active');
+
+    Route::get('stok-aksesori', [StokAksesoriController::class, 'index'])->name('stok.aksesori.index');
+    Route::post('stok-aksesori/{aksesori}/masuk', [StokAksesoriController::class, 'store'])->name('stok.aksesori.store');
+
     Route::get('koreksi-scan', [KoreksiScanController::class, 'index'])->name('koreksi.scan');
     Route::post('koreksi-scan/cari', [KoreksiScanController::class, 'cari'])->name('koreksi.scan.cari');
     Route::post('koreksi-scan/{produk}/batalkan', [KoreksiScanController::class, 'batalkan'])->name('koreksi.scan.batalkan');
@@ -162,6 +193,9 @@ Route::middleware('auth')->group(function () {
     Route::post('scan/checking-inproses', [ScanController::class, 'checking_inproses_store'])->name('scan.checking.inproses_store');
     Route::post('scan/checking-buang', [ScanController::class, 'checking_buang_store'])->name('scan.checking.buang_store');
 
+    Route::get('scan-packing', [ScanPackingController::class, 'index'])->name('scan.packing.index');
+    Route::post('scan-packing', [ScanPackingController::class, 'store'])->name('scan.packing.store');
+
     Route::get('riwayat-scan-masuk', [RiwayatScanMasukController::class, 'index'])->name('riwayat.scan.masuk');
     Route::get('total-pengerjaan-user', [TotalPengerjaanUserController::class, 'index'])->name('total.pengerjaan.user');
     Route::get('temuan-reject-qc', [TemuanRejectQcController::class, 'index'])->name('temuan.reject.qc');
@@ -181,9 +215,11 @@ Route::middleware('auth')->group(function () {
     Route::get('qr-belum-discan/{proses}', [QrBelumDiscanController::class, 'detail'])->name('qr.belum.discan.show');
 
     Route::get('laporan-scan', [LaporanScanController::class, 'index'])->name('laporan.scan');
+    Route::get('laporan-scan-packing', [LaporanScanPackingController::class, 'index'])->name('laporan.scan.packing');
+    Route::get('laporan-stok-aksesori', [LaporanStokAksesoriController::class, 'index'])->name('laporan.stok.aksesori');
 
     Route::get('laporan-kualitas', [LaporanKualitasController::class, 'index'])->name('laporan.kualitas');
-Route::get('laporan-kerusakan-qc', [LaporanKerusakanQcController::class, 'index'])->name('laporan.kerusakan.qc');
+    Route::get('laporan-kerusakan-qc', [LaporanKerusakanQcController::class, 'index'])->name('laporan.kerusakan.qc');
 
     Route::get('laporan-produk-buang', [LaporanProdukBuangController::class, 'index'])->name('laporan.produk.buang');
     Route::get('data-reject-sanitary', [DataRejectSanitaryController::class, 'index'])->name('data.reject.sanitary');

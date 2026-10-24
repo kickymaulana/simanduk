@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AturanPenolakan;
 use App\Models\Cacat;
-use App\Models\Kualitas;
+use App\Models\Merk;
 use App\Models\Oven;
 use App\Models\PengerjaanProduk;
 use App\Models\Produk;
@@ -14,6 +14,7 @@ use App\Models\Warna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -199,70 +200,87 @@ class ScanController extends Controller
 
         return $this->renderScan($page, [
             'pilihan_cacat' => in_array($mode, ['inproses', 'buang']) ? $this->pilihanCacat() : collect(),
-            'pilihan_kualitas' => Kualitas::all(['id', 'kualitas']),
+            'pilihan_merk' => Merk::with('kualitas:id,kualitas')
+                ->where('is_active', true)
+                ->orderBy('merk')
+                ->get(['id', 'kualitas_id', 'merk']),
             'pilihan_warna' => Warna::all(['id', 'warna']),
         ]);
     }
 
     public function checking_store(Request $request)
     {
-        $request->validate([
-            'qr' => 'required|string',
-            'kualitas_id' => 'nullable|exists:kualitas,id',
-            'warna_id' => 'nullable|exists:warna,id',
-        ]);
+        $data = $this->validateChecking($request);
+        $merk = $this->merkAktif($data['merk_id']);
 
-        return $this->prosesScan($request, 'OK', function (Produk $produk, SesiKerja $sesi) use ($request) {
+        return $this->prosesScan($request, 'OK', function (Produk $produk, SesiKerja $sesi) use ($data, $merk) {
             $produk->update([
                 'sudah_scan' => 'Sudah',
                 'status_akhir' => 'OK',
                 'proses_id' => $sesi->proses_id,
-                'kualitas_id' => $request->kualitas_id,
-                'warna_id' => $request->warna_id,
+                'kualitas_id' => $merk->kualitas_id,
+                'merk_id' => $merk->id,
+                'warna_id' => $data['warna_id'] ?? null,
             ]);
-        });
+        }, kualitasId: $merk->kualitas_id, merkId: $merk->id);
     }
 
     public function checking_inproses_store(Request $request)
     {
-        $request->validate([
-            'qr' => 'required|string',
-            'cacat_ids' => 'nullable|array',
-            'kualitas_id' => 'nullable|exists:kualitas,id',
-            'warna_id' => 'nullable|exists:warna,id',
-        ]);
+        $data = $this->validateChecking($request, true);
+        $merk = $this->merkAktif($data['merk_id']);
 
-        return $this->prosesScan($request, 'In Proses', function (Produk $produk, SesiKerja $sesi) use ($request) {
+        return $this->prosesScan($request, 'In Proses', function (Produk $produk, SesiKerja $sesi) use ($data, $merk) {
             $produk->update([
                 'sudah_scan' => 'Sudah',
                 'status_akhir' => 'In Proses',
                 'proses_id' => $sesi->proses_id,
-                'kualitas_id' => $request->kualitas_id,
-                'warna_id' => $request->warna_id,
+                'kualitas_id' => $merk->kualitas_id,
+                'merk_id' => $merk->id,
+                'warna_id' => $data['warna_id'] ?? null,
             ]);
-        }, $request->cacat_ids ?? []);
+        }, $data['cacat_ids'] ?? [], kualitasId: $merk->kualitas_id, merkId: $merk->id);
     }
 
     public function checking_buang_store(Request $request)
     {
-        $request->validate([
-            'qr' => 'required|string',
-            'cacat_ids' => 'required|array|min:1',
-            'kualitas_id' => 'nullable|exists:kualitas,id',
-            'warna_id' => 'nullable|exists:warna,id',
-        ], [
-            'cacat_ids.required' => 'Wajib memilih minimal satu jenis cacat untuk membuang produk!',
-        ]);
+        $data = $this->validateChecking($request, true, true);
+        $merk = $this->merkAktif($data['merk_id']);
 
-        return $this->prosesScan($request, 'Buang', function (Produk $produk, SesiKerja $sesi) use ($request) {
+        return $this->prosesScan($request, 'Buang', function (Produk $produk, SesiKerja $sesi) use ($data, $merk) {
             $produk->update([
                 'sudah_scan' => 'Sudah',
                 'status_akhir' => 'Buang',
                 'proses_id' => $sesi->proses_id,
-                'kualitas_id' => $request->kualitas_id,
-                'warna_id' => $request->warna_id,
+                'kualitas_id' => $merk->kualitas_id,
+                'merk_id' => $merk->id,
+                'warna_id' => $data['warna_id'] ?? null,
             ]);
-        }, $request->cacat_ids, true);
+        }, $data['cacat_ids'], true, kualitasId: $merk->kualitas_id, merkId: $merk->id);
+    }
+
+    private function validateChecking(Request $request, bool $withCacat = false, bool $cacatRequired = false): array
+    {
+        $rules = [
+            'qr' => ['required', 'string'],
+            'merk_id' => ['required', Rule::exists('merk', 'id')->where('is_active', true)],
+            'warna_id' => ['nullable', 'exists:warna,id'],
+        ];
+
+        if ($withCacat) {
+            $rules['cacat_ids'] = $cacatRequired ? ['required', 'array', 'min:1'] : ['nullable', 'array'];
+        }
+
+        return $request->validate($rules, [
+            'merk_id.required' => 'Pilih merek sebelum melakukan scan!',
+            'merk_id.exists' => 'Merek tidak aktif atau tidak valid.',
+            'cacat_ids.required' => 'Wajib memilih minimal satu jenis cacat untuk membuang produk!',
+        ]);
+    }
+
+    private function merkAktif(int $merkId): Merk
+    {
+        return Merk::whereKey($merkId)->where('is_active', true)->firstOrFail();
     }
 
     // ─────────────────────────── LOGIKA INTI ───────────────────────────
@@ -271,7 +289,7 @@ class ScanController extends Controller
      * Inti semua scan produk: cari produk by QR (global), catat pengerjaan,
      * update produk. Proses diambil dari sesi aktif (bukan troli).
      */
-    private function prosesScan(Request $request, string $statusKondisi, callable $updateProduk, array $cacatIds = [], bool $pakaiProsesBuang = false, ?string $modeLabel = null)
+    private function prosesScan(Request $request, string $statusKondisi, callable $updateProduk, array $cacatIds = [], bool $pakaiProsesBuang = false, ?string $modeLabel = null, ?int $kualitasId = null, ?int $merkId = null)
     {
         $sesi = $this->sesiAktif();
 
@@ -369,8 +387,8 @@ class ScanController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($produk, $sesi, $statusKondisi, $updateProduk, $cacatIds, $pakaiProsesBuang, $request) {
-                $pengerjaanLeader = $this->catatPengerjaan($produk, $sesi, $statusKondisi, $request->kualitas_id ?? null);
+            DB::transaction(function () use ($produk, $sesi, $statusKondisi, $updateProduk, $cacatIds, $pakaiProsesBuang, $kualitasId, $merkId) {
+                $pengerjaanLeader = $this->catatPengerjaan($produk, $sesi, $statusKondisi, $kualitasId, $merkId);
 
                 if (! empty($cacatIds) && $pengerjaanLeader) {
                     $this->catatCacatDanPj($pengerjaanLeader, $produk, $sesi, $cacatIds, $pakaiProsesBuang);
@@ -390,7 +408,7 @@ class ScanController extends Controller
     /**
      * Catat pengerjaan untuk leader + semua anggota tim.
      */
-    private function catatPengerjaan(Produk $produk, SesiKerja $sesi, string $statusKondisi, ?int $kualitasId = null)
+    private function catatPengerjaan(Produk $produk, SesiKerja $sesi, string $statusKondisi, ?int $kualitasId = null, ?int $merkId = null)
     {
         $data = [
             'user_id' => Auth::id(),
@@ -399,6 +417,7 @@ class ScanController extends Controller
             'proses_id' => $sesi->proses_id,
             'status_kondisi' => $statusKondisi,
             'kualitas_id' => $kualitasId,
+            'merk_id' => $merkId,
         ];
 
         $leader = PengerjaanProduk::create($data);

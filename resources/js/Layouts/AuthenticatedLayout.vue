@@ -5,14 +5,11 @@ import ScanSuccessOverlay from "@/components/ScanSuccessOverlay.vue"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { toast } from 'vue-sonner'
 import { Toaster } from '@/components/ui/sonner'
-import { computed, watch } from 'vue'
+import { watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import 'vue-sonner/style.css'
 
 const page = usePage()
-const flashSuccess = computed(() => page.props.flash.success)
-console.log(flashSuccess.value)
-
 // Watch perubahan pada flash message dari Laravel
 watch(
   () => page.props.flash,
