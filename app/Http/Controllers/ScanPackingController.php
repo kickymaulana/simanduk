@@ -7,6 +7,7 @@ use App\Models\Gudang;
 use App\Models\Merk;
 use App\Models\Packing;
 use App\Models\PergerakanStokAksesori;
+use App\Models\Setting;
 use App\Models\Warna;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -19,11 +20,18 @@ class ScanPackingController extends Controller
 {
     public function index()
     {
+        $tampilkanGrade = Setting::boolean('tampilkan_grade_scan_packing');
+        $merks = Merk::query()
+            ->where('is_active', true)
+            ->orderBy('merk');
+
+        if ($tampilkanGrade) {
+            $merks->with('kualitas:id,kualitas');
+        }
+
         return Inertia::render('ScanPacking/Index', [
-            'merks' => Merk::with('kualitas:id,kualitas')
-                ->where('is_active', true)
-                ->orderBy('merk')
-                ->get(['id', 'kualitas_id', 'merk']),
+            'tampilkan_grade' => $tampilkanGrade,
+            'merks' => $merks->get($tampilkanGrade ? ['id', 'kualitas_id', 'merk'] : ['id', 'merk']),
             'warnas' => Warna::orderBy('warna')->get(['id', 'warna']),
             'gudangs' => Gudang::where('is_active', true)->orderBy('gudang')->get(['id', 'gudang']),
             'aksesoris' => Aksesori::where('is_active', true)
@@ -56,9 +64,10 @@ class ScanPackingController extends Controller
         $merk = Merk::whereKey($data['merk_id'])
             ->where('is_active', true)
             ->firstOrFail();
+        $tampilkanGrade = Setting::boolean('tampilkan_grade_scan_packing');
 
         try {
-            $packing = DB::transaction(function () use ($data, $request, $merk) {
+            $packing = DB::transaction(function () use ($data, $request, $merk, $tampilkanGrade) {
                 $quantities = collect($data['accessories'])->keyBy('aksesori_id');
                 $aksesoris = Aksesori::whereIn('id', $quantities->keys())
                     ->orderBy('id')
@@ -110,13 +119,18 @@ class ScanPackingController extends Controller
                     ]);
                 }
 
-                return $packing->load([
-                    'kualitas:id,kualitas',
+                $relations = [
                     'merk:id,merk',
                     'warna:id,warna',
                     'gudang:id,gudang',
                     'accessories.aksesori:id,part_number,description',
-                ]);
+                ];
+
+                if ($tampilkanGrade) {
+                    $relations[] = 'kualitas:id,kualitas';
+                }
+
+                return $packing->load($relations);
             });
         } catch (QueryException $exception) {
             if (Packing::where('qrcode_kardus', $data['qrcode_kardus'])->exists()) {
@@ -134,7 +148,7 @@ class ScanPackingController extends Controller
             'scan_mode' => 'Packing Berhasil',
             'scan_detail' => [
                 'jenis' => $packing->jenis,
-                'kualitas' => $packing->kualitas?->kualitas,
+                ...($tampilkanGrade ? ['kualitas' => $packing->kualitas?->kualitas] : []),
                 'merk' => $packing->merk?->merk,
                 'warna' => $packing->warna?->warna,
                 'gudang' => $packing->gudang?->gudang,

@@ -11,9 +11,8 @@ defineOptions({ layout: AuthenticatedLayout });
 
 type Merk = {
     id: number;
-    kualitas_id: number;
     merk: string;
-    kualitas: { id: number; kualitas: string };
+    kualitas?: { id: number; kualitas: string };
 };
 
 type Item = { id: number; [key: string]: string | number };
@@ -21,6 +20,7 @@ type Aksesori = { id: number; part_number: string; description: string; stok: nu
 type AccessorySelection = { aksesori_id: number; quantity: number };
 
 const props = defineProps<{
+    tampilkan_grade: boolean;
     merks: Merk[];
     warnas: Item[];
     gudangs: Item[];
@@ -152,10 +152,10 @@ onMounted(focusQr);
                             </select>
                             <p class="text-sm text-destructive">{{ form.errors.merk_id }}</p>
                         </div>
-                        <div class="space-y-2">
+                        <div v-if="tampilkan_grade" class="space-y-2">
                             <Label>Grade</Label>
                             <div class="min-h-10 rounded-md border bg-muted px-3 py-2 text-sm">
-                                {{ selectedMerk?.kualitas.kualitas || "Otomatis sesuai merk" }}
+                                {{ selectedMerk?.kualitas?.kualitas || "Otomatis sesuai merk" }}
                             </div>
                         </div>
                         <div class="space-y-2">

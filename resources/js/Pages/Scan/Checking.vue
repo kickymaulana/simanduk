@@ -11,11 +11,12 @@ import {
 type Merk = {
     id: number;
     merk: string;
-    kualitas: { id: number; kualitas: string };
+    kualitas?: { id: number; kualitas: string };
 };
 
 const props = defineProps<{
     sesi: any;
+    tampilkan_grade: boolean;
     pilihan_merk: Merk[];
     pilihan_warna: Array<{ id: number; warna: string }>;
 }>();
@@ -29,23 +30,6 @@ const form = useForm({
 });
 
 const selectedMerk = computed(() => props.pilihan_merk.find((merk) => merk.id === form.merk_id));
-
-const gradeLabel = (grade: string) => {
-    if (grade.toUpperCase().includes("KW3")) return "KW3";
-    if (grade.toUpperCase().includes("SG")) return "SG";
-    if (grade.toUpperCase().includes("AB")) return "AB";
-    if (grade.toUpperCase().includes("FG")) return "FG";
-    return grade;
-};
-
-const gradeClass = (grade: string) => {
-    const label = gradeLabel(grade);
-    if (label === "FG") return "bg-green-100 text-green-700 border-green-200";
-    if (label === "SG") return "bg-blue-100 text-blue-700 border-blue-200";
-    if (label === "AB") return "bg-amber-100 text-amber-800 border-amber-200";
-    if (label === "KW3") return "bg-red-100 text-red-700 border-red-200";
-    return "bg-slate-100 text-slate-700 border-slate-200";
-};
 
 const focusInput = (attempt = 0) => {
     if (nativeInput.value) {
@@ -140,8 +124,11 @@ defineOptions({ layout: AuthenticatedLayout });
                                  form.merk_id === merk.id ? 'bg-blue-600 border-blue-700 text-white shadow-md scale-[1.02]' : 'bg-slate-50 border-slate-100 text-slate-700']"
                     >
                         <span class="text-base font-black">{{ merk.merk }}</span>
-                        <span :class="['px-2 py-0.5 rounded-full border text-[10px] font-black', gradeClass(merk.kualitas.kualitas)]">
-                            {{ gradeLabel(merk.kualitas.kualitas) }}
+                        <span
+                            v-if="tampilkan_grade && merk.kualitas"
+                            class="px-2 py-0.5 rounded-full border text-[10px] font-black bg-slate-100 text-slate-700 border-slate-200"
+                        >
+                            {{ merk.kualitas.kualitas }}
                         </span>
                     </button>
                 </div>
@@ -172,8 +159,8 @@ defineOptions({ layout: AuthenticatedLayout });
             <div class="flex-1">
                 <h4 class="text-xs font-bold text-green-800 uppercase">Ringkasan Pilihan</h4>
                 <p class="text-[11px] text-green-700 leading-relaxed">
-                    Merek: <strong>{{ selectedMerk?.merk || "Belum dipilih" }}</strong> · Grade:
-                    <strong>{{ selectedMerk ? gradeLabel(selectedMerk.kualitas.kualitas) : "-" }}</strong>.
+                    Merek: <strong>{{ selectedMerk?.merk || "Belum dipilih" }}</strong><template v-if="tampilkan_grade && selectedMerk?.kualitas"> · Grade:
+                    <strong>{{ selectedMerk.kualitas.kualitas }}</strong></template>.
                     Produk yang discan dalam mode ini otomatis berstatus <strong>OK</strong>.
                 </p>
             </div>

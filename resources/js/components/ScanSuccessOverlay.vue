@@ -193,7 +193,7 @@ onBeforeUnmount(() => {
                         <p v-if="counter !== null" class="text-base font-semibold text-slate-500">Scan ke-{{ counter }} (sesi ini)</p>
                         <div v-if="detail" class="mt-3 space-y-2 text-sm text-slate-600">
                             <p class="font-semibold">
-                                {{ detail.jenis }} · {{ detail.kualitas || "-" }} · {{ detail.merk || "-" }} · {{ detail.warna || "-" }} · {{ detail.gudang || "-" }}
+                                {{ detail.jenis }}<template v-if="detail.kualitas"> · {{ detail.kualitas }}</template> · {{ detail.merk || "-" }} · {{ detail.warna || "-" }} · {{ detail.gudang || "-" }}
                             </p>
                             <p class="font-bold text-slate-800">Total aksesori: {{ detail.total_aksesori }}</p>
                             <div class="max-w-lg text-left">

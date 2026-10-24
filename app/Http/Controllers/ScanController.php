@@ -10,6 +10,7 @@ use App\Models\PengerjaanProduk;
 use App\Models\Produk;
 use App\Models\Proses;
 use App\Models\SesiKerja;
+use App\Models\Setting;
 use App\Models\Warna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -198,12 +199,19 @@ class ScanController extends Controller
             default => 'Scan/Checking',
         };
 
+        $tampilkanGrade = Setting::boolean('tampilkan_grade_scan_checking');
+        $merks = Merk::query()
+            ->where('is_active', true)
+            ->orderBy('merk');
+
+        if ($tampilkanGrade) {
+            $merks->with('kualitas:id,kualitas');
+        }
+
         return $this->renderScan($page, [
             'pilihan_cacat' => in_array($mode, ['inproses', 'buang']) ? $this->pilihanCacat() : collect(),
-            'pilihan_merk' => Merk::with('kualitas:id,kualitas')
-                ->where('is_active', true)
-                ->orderBy('merk')
-                ->get(['id', 'kualitas_id', 'merk']),
+            'tampilkan_grade' => $tampilkanGrade,
+            'pilihan_merk' => $merks->get($tampilkanGrade ? ['id', 'kualitas_id', 'merk'] : ['id', 'merk']),
             'pilihan_warna' => Warna::all(['id', 'warna']),
         ]);
     }

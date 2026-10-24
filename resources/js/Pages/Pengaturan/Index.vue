@@ -20,6 +20,8 @@ import { IconSettings, IconLock, IconLockOpen, IconAlertTriangle, IconClock } fr
 const props = defineProps<{
     cek_urutan_scan: boolean;
     cut_off_jam: number;
+    tampilkan_grade_scan_packing: boolean;
+    tampilkan_grade_scan_checking: boolean;
 }>();
 
 const isActive = ref(props.cek_urutan_scan);
@@ -27,6 +29,36 @@ const isToggling = ref(false);
 
 const cutOffJam = ref<number>(props.cut_off_jam);
 const isSavingCutOff = ref(false);
+const tampilkanGradePacking = ref(props.tampilkan_grade_scan_packing);
+const tampilkanGradeChecking = ref(props.tampilkan_grade_scan_checking);
+const isSavingGrade = ref(false);
+
+const saveGradeVisibility = (target: "packing" | "checking", value: boolean) => {
+    if (isSavingGrade.value) return;
+
+    const previousPacking = tampilkanGradePacking.value;
+    const previousChecking = tampilkanGradeChecking.value;
+
+    if (target === "packing") tampilkanGradePacking.value = value;
+    if (target === "checking") tampilkanGradeChecking.value = value;
+
+    isSavingGrade.value = true;
+    router.post(route("pengaturan.tampilan_grade"), {
+        scan_packing: tampilkanGradePacking.value,
+        scan_checking: tampilkanGradeChecking.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => toast.success("Pengaturan tampilan Grade disimpan"),
+        onError: () => {
+            tampilkanGradePacking.value = previousPacking;
+            tampilkanGradeChecking.value = previousChecking;
+            toast.error("Gagal menyimpan pengaturan tampilan Grade");
+        },
+        onFinish: () => {
+            isSavingGrade.value = false;
+        },
+    });
+};
 
 const saveCutOff = () => {
     if (isSavingCutOff.value) return;
@@ -124,6 +156,46 @@ defineOptions({ layout: AuthenticatedLayout });
                     <IconAlertTriangle class="size-5 text-blue-600 shrink-0 mt-0.5" />
                     <p class="text-xs text-blue-800 leading-relaxed">
                         Nonaktifkan fitur ini hanya jika ada produk yang terblokir karena tidak sesuai urutan (misal ada proses yang terlewat). Setelah produk selesai discan, segera aktifkan kembali.
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card class="border-none shadow-sm ring-1 ring-slate-200">
+            <CardHeader class="pb-3">
+                <CardTitle class="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <IconLock class="size-4" /> Kerahasiaan Grade Operator
+                </CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-3">
+                <div class="flex items-center justify-between gap-4 p-4 bg-slate-50 rounded-xl">
+                    <div class="space-y-1">
+                        <Label class="font-bold text-base">Tampilkan Grade di Scan Packing</Label>
+                        <p class="text-sm text-muted-foreground">Mengatur Grade pada pilihan merek, ringkasan, dan hasil scan Packing.</p>
+                    </div>
+                    <Switch
+                        :model-value="tampilkanGradePacking"
+                        :disabled="isSavingGrade"
+                        class="scale-125"
+                        @update:model-value="saveGradeVisibility('packing', $event)"
+                    />
+                </div>
+                <div class="flex items-center justify-between gap-4 p-4 bg-slate-50 rounded-xl">
+                    <div class="space-y-1">
+                        <Label class="font-bold text-base">Tampilkan Grade di Scan Checking</Label>
+                        <p class="text-sm text-muted-foreground">Berlaku untuk mode OK, In Proses, dan Buang pada Scan Checking.</p>
+                    </div>
+                    <Switch
+                        :model-value="tampilkanGradeChecking"
+                        :disabled="isSavingGrade"
+                        class="scale-125"
+                        @update:model-value="saveGradeVisibility('checking', $event)"
+                    />
+                </div>
+                <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <IconAlertTriangle class="size-5 text-blue-600 shrink-0 mt-0.5" />
+                    <p class="text-xs text-blue-800 leading-relaxed">
+                        Saat disembunyikan, Grade tidak dikirim ke halaman operator atau hasil scan. Grade tetap ditentukan dari merek dan disimpan untuk laporan.
                     </p>
                 </div>
             </CardContent>

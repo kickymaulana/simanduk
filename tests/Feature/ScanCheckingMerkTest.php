@@ -14,6 +14,7 @@ use App\Models\SesiKerja;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -104,6 +105,29 @@ class ScanCheckingMerkTest extends TestCase
                     ->where('pilihan_merk.0.id', $this->dyna->id)
                     ->where('pilihan_merk.0.merk', 'DYNA')
                     ->where('pilihan_merk.0.kualitas.kualitas', 'AB (DYNA / RAPTOR)'));
+        }
+    }
+
+    public function test_all_checking_modes_hide_grade_from_props_when_setting_is_disabled(): void
+    {
+        DB::table('settings')->where('key', 'tampilkan_grade_scan_checking')->update(['value' => '0']);
+
+        foreach ([
+            ['scan.checking', [], 'Scan/Checking'],
+            ['scan.checking.mode', ['mode' => 'inproses'], 'Scan/CheckingInproses'],
+            ['scan.checking.mode', ['mode' => 'buang'], 'Scan/CheckingBuang'],
+        ] as [$routeName, $parameters, $component]) {
+            $this->actingAs($this->leader)
+                ->withSession(['sesi_kerja_id' => $this->sesi->id])
+                ->get(route($routeName, $parameters))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component($component)
+                    ->where('tampilkan_grade', false)
+                    ->where('pilihan_merk.0.id', $this->dyna->id)
+                    ->where('pilihan_merk.0.merk', 'DYNA')
+                    ->missing('pilihan_merk.0.kualitas')
+                    ->missing('pilihan_merk.0.kualitas_id'));
         }
     }
 

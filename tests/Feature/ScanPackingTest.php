@@ -10,7 +10,9 @@ use App\Models\Packing;
 use App\Models\User;
 use App\Models\Warna;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ScanPackingTest extends TestCase
@@ -116,6 +118,45 @@ class ScanPackingTest extends TestCase
             'stok_sebelum' => 20,
             'stok_sesudah' => 16,
         ]);
+    }
+
+    public function test_grade_is_hidden_from_packing_props_and_flash_while_still_saved_from_brand(): void
+    {
+        DB::table('settings')->where('key', 'tampilkan_grade_scan_packing')->update(['value' => '0']);
+
+        $this->actingAs($this->user)
+            ->get(route('scan.packing.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('tampilkan_grade', false)
+                ->where('merks.0.id', $this->merk->id)
+                ->where('merks.0.merk', 'Merk A')
+                ->missing('merks.0.kualitas')
+                ->missing('merks.0.kualitas_id'));
+
+        $this->actingAs($this->user)
+            ->post(route('scan.packing.store'), $this->payload())
+            ->assertSessionHasNoErrors()
+            ->assertSessionMissing('scan_detail.kualitas');
+
+        $this->assertDatabaseHas('packing', [
+            'merk_id' => $this->merk->id,
+            'kualitas_id' => $this->grade->id,
+        ]);
+    }
+
+    public function test_grade_is_shown_in_packing_props_and_flash_by_default(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('scan.packing.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('tampilkan_grade', true)
+                ->where('merks.0.kualitas.kualitas', 'FG'));
+
+        $this->actingAs($this->user)
+            ->post(route('scan.packing.store'), $this->payload())
+            ->assertSessionHas('scan_detail.kualitas', 'FG');
     }
 
     public function test_duplicate_cardboard_qr_is_rejected_case_insensitively(): void
