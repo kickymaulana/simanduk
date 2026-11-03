@@ -207,6 +207,10 @@ defineOptions({ layout: AuthenticatedLayout });
             <strong>{{ selectedMerk.kualitas.kualitas }}</strong></template>
         </div>
 
+        <p class="mt-3 text-center text-xs text-muted-foreground">
+            Jika mengalami kendala saat scan, silakan hubungi 0821 2221 5081. Mohon sertakan foto atau video error yang terlihat jelas agar dapat segera kami bantu.
+        </p>
+
         <div v-if="form.processing" class="fixed inset-0 bg-orange-900/40 backdrop-blur-sm z-50 flex items-center justify-center">
             <div class="bg-white p-5 rounded-2xl shadow-2xl flex flex-col items-center border-t-4 border-orange-600">
                 <IconLoader2 class="size-8 animate-spin text-orange-600 mb-2" />

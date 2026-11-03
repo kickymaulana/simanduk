@@ -156,6 +156,10 @@ defineOptions({ layout: AuthenticatedLayout });
                 </div>
             </CardContent>
         </Card>
+
+        <p class="mt-3 text-center text-xs text-muted-foreground">
+            Jika mengalami kendala saat scan, silakan hubungi 0821 2221 5081. Mohon sertakan foto atau video error yang terlihat jelas agar dapat segera kami bantu.
+        </p>
     </div>
 </template>
 

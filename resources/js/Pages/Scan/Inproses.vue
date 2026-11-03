@@ -208,6 +208,10 @@ defineOptions({ layout: AuthenticatedLayout });
             </Card>
         </div>
 
+        <p class="mt-3 text-center text-xs text-muted-foreground">
+            Jika mengalami kendala saat scan, silakan hubungi 0821 2221 5081. Mohon sertakan foto atau video error yang terlihat jelas agar dapat segera kami bantu.
+        </p>
+
         <div v-if="form.processing" class="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center">
             <div class="flex flex-col items-center gap-2">
                 <IconLoader2 class="size-10 animate-spin text-orange-600" />
