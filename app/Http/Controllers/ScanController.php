@@ -219,59 +219,59 @@ class ScanController extends Controller
     public function checking_store(Request $request)
     {
         $data = $this->validateChecking($request);
-        $merk = $this->merkAktif($data['merk_id']);
+        $merk = isset($data['merk_id']) ? $this->merkAktif($data['merk_id']) : null;
 
         return $this->prosesScan($request, 'OK', function (Produk $produk, SesiKerja $sesi) use ($data, $merk) {
             $produk->update([
                 'sudah_scan' => 'Sudah',
                 'status_akhir' => 'OK',
                 'proses_id' => $sesi->proses_id,
-                'kualitas_id' => $merk->kualitas_id,
-                'merk_id' => $merk->id,
+                'kualitas_id' => $merk?->kualitas_id,
+                'merk_id' => $merk?->id,
                 'warna_id' => $data['warna_id'] ?? null,
             ]);
-        }, kualitasId: $merk->kualitas_id, merkId: $merk->id);
+        }, kualitasId: $merk?->kualitas_id, merkId: $merk?->id);
     }
 
     public function checking_inproses_store(Request $request)
     {
         $data = $this->validateChecking($request, true);
-        $merk = $this->merkAktif($data['merk_id']);
+        $merk = isset($data['merk_id']) ? $this->merkAktif($data['merk_id']) : null;
 
         return $this->prosesScan($request, 'In Proses', function (Produk $produk, SesiKerja $sesi) use ($data, $merk) {
             $produk->update([
                 'sudah_scan' => 'Sudah',
                 'status_akhir' => 'In Proses',
                 'proses_id' => $sesi->proses_id,
-                'kualitas_id' => $merk->kualitas_id,
-                'merk_id' => $merk->id,
+                'kualitas_id' => $merk?->kualitas_id,
+                'merk_id' => $merk?->id,
                 'warna_id' => $data['warna_id'] ?? null,
             ]);
-        }, $data['cacat_ids'] ?? [], kualitasId: $merk->kualitas_id, merkId: $merk->id);
+        }, $data['cacat_ids'] ?? [], kualitasId: $merk?->kualitas_id, merkId: $merk?->id);
     }
 
     public function checking_buang_store(Request $request)
     {
         $data = $this->validateChecking($request, true, true);
-        $merk = $this->merkAktif($data['merk_id']);
+        $merk = isset($data['merk_id']) ? $this->merkAktif($data['merk_id']) : null;
 
         return $this->prosesScan($request, 'Buang', function (Produk $produk, SesiKerja $sesi) use ($data, $merk) {
             $produk->update([
                 'sudah_scan' => 'Sudah',
                 'status_akhir' => 'Buang',
                 'proses_id' => $sesi->proses_id,
-                'kualitas_id' => $merk->kualitas_id,
-                'merk_id' => $merk->id,
+                'kualitas_id' => $merk?->kualitas_id,
+                'merk_id' => $merk?->id,
                 'warna_id' => $data['warna_id'] ?? null,
             ]);
-        }, $data['cacat_ids'], true, kualitasId: $merk->kualitas_id, merkId: $merk->id);
+        }, $data['cacat_ids'], true, kualitasId: $merk?->kualitas_id, merkId: $merk?->id);
     }
 
     private function validateChecking(Request $request, bool $withCacat = false, bool $cacatRequired = false): array
     {
         $rules = [
             'qr' => ['required', 'string'],
-            'merk_id' => ['required', Rule::exists('merk', 'id')->where('is_active', true)],
+            'merk_id' => ['nullable', Rule::exists('merk', 'id')->where('is_active', true)],
             'warna_id' => ['nullable', 'exists:warna,id'],
         ];
 
@@ -280,7 +280,6 @@ class ScanController extends Controller
         }
 
         return $request->validate($rules, [
-            'merk_id.required' => 'Pilih merek sebelum melakukan scan!',
             'merk_id.exists' => 'Merek tidak aktif atau tidak valid.',
             'cacat_ids.required' => 'Wajib memilih minimal satu jenis cacat untuk membuang produk!',
         ]);
