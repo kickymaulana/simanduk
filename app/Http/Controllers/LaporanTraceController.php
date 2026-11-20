@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\PengerjaanProduk;
 use App\Models\Produk;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class LaporanTraceController extends Controller
 {
     private const QC_VISUAL = 'QC Visual & Dimensi';
+
     private const SOLAR = 'Solar';
+
     private const CASTING = 'Casting';
 
-    private function queryProduk(Request $request)
+    private function queryProduk(Request $request, bool $urutQcVisual = false)
     {
-        return Produk::query()
+        $query = Produk::query()
             ->with([
                 'kualitas:id,kualitas',
                 'warna:id,warna',
@@ -27,10 +31,38 @@ class LaporanTraceController extends Controller
                 ])->latest('id'),
             ])
             ->when($request->search, fn ($q, $s) => $q->where('qrcode', 'like', "%{$s}%"))
-            ->when(in_array($request->jenis, ['Body', 'Tangki']), fn ($q) => $q->where('jenis', $request->jenis))
-            ->latest('updated_at')
-            ->paginate(15)
-            ->withQueryString();
+            ->when(in_array($request->jenis, ['Body', 'Tangki']), fn ($q) => $q->where('jenis', $request->jenis));
+
+        if ($urutQcVisual) {
+            $filters = $request->validate([
+                'qc_order' => ['nullable', 'in:asc,desc'],
+                'qc_dari' => ['nullable', 'date_format:Y-m-d'],
+                'qc_sampai' => ['nullable', 'date_format:Y-m-d', ...($request->filled('qc_dari') ? ['after_or_equal:qc_dari'] : [])],
+            ]);
+            $tanggalQc = PengerjaanProduk::query()
+                ->select('pengerjaan_produk.created_at')
+                ->whereColumn('pengerjaan_produk.produk_id', 'produk.id')
+                ->whereHas('proses', fn ($q) => $q->where('proses', self::QC_VISUAL))
+                ->latest('pengerjaan_produk.id')
+                ->limit(1);
+
+            $query->addSelect(['tanggal_qc_visual' => clone $tanggalQc]);
+
+            if (! empty($filters['qc_dari'])) {
+                $query->where(clone $tanggalQc, '>=', Carbon::parse($filters['qc_dari'])->startOfDay());
+            }
+            if (! empty($filters['qc_sampai'])) {
+                $query->where(clone $tanggalQc, '<', Carbon::parse($filters['qc_sampai'])->addDay()->startOfDay());
+            }
+
+            $query->orderByRaw('tanggal_qc_visual IS NULL')
+                ->orderBy('tanggal_qc_visual', $filters['qc_order'] ?? 'desc')
+                ->orderByDesc('produk.id');
+        } else {
+            $query->latest('updated_at');
+        }
+
+        return $query->paginate(15)->withQueryString();
     }
 
     private function transformProduk(Produk $produk): array
@@ -118,11 +150,11 @@ class LaporanTraceController extends Controller
 
     public function operator(Request $request)
     {
-        $produks = $this->queryProduk($request)->through(fn ($p) => $this->transformProduk($p));
+        $produks = $this->queryProduk($request, true)->through(fn ($p) => $this->transformProduk($p));
 
         return Inertia::render('LaporanTrace/Operator', [
             'produks' => $produks,
-            'filters' => $request->only(['search', 'jenis']),
+            'filters' => array_merge(['qc_order' => 'desc'], $request->only(['search', 'jenis', 'qc_order', 'qc_dari', 'qc_sampai'])),
         ]);
     }
 
