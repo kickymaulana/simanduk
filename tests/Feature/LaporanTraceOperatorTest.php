@@ -103,6 +103,32 @@ class LaporanTraceOperatorTest extends TestCase
                 ->where('filters.qc_dari', '2026-11-01')->where('filters.jenis', 'Body'));
     }
 
+    public function test_machine_report_uses_qc_sort_filters_and_oven_process_timestamps(): void
+    {
+        $ovenSusun = Proses::create(['departemen_id' => $this->proses->departemen_id, 'urutan' => 2, 'proses' => 'Oven Susun']);
+        $ovenBongkar = Proses::create(['departemen_id' => $this->proses->departemen_id, 'urutan' => 3, 'proses' => 'Oven Bongkar']);
+        $produk = $this->produk('OVEN1', ['2026-11-08 10:00:00']);
+
+        foreach ([[$ovenSusun, '2026-11-07 14:00:00'], [$ovenBongkar, '2026-11-08 05:00:00']] as [$proses, $waktu]) {
+            PengerjaanProduk::create([
+                'user_id' => $this->user->id,
+                'produk_id' => $produk->id,
+                'sesi_kerja_id' => $this->sesi->id,
+                'proses_id' => $proses->id,
+                'status_kondisi' => 'OK',
+                'created_at' => $waktu,
+                'updated_at' => $waktu,
+            ]);
+        }
+
+        $this->get(route('laporan.trace.mesin', ['qc_dari' => '2026-11-08', 'qc_order' => 'asc']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.qc_order', 'asc')
+                ->where('produks.total', 1)
+                ->where('produks.data.0.oven.susun', '07 Nov, 14:00')
+                ->where('produks.data.0.oven.bongkar', '08 Nov, 05:00'));
+    }
+
     public function test_rejects_invalid_sort_and_date_range(): void
     {
         $this->get(route('laporan.trace.operator', ['qc_order' => 'invalid']))->assertSessionHasErrors('qc_order');
@@ -110,12 +136,16 @@ class LaporanTraceOperatorTest extends TestCase
         $this->get(route('laporan.trace.operator', ['qc_dari' => 'not-a-date']))->assertSessionHasErrors('qc_dari');
     }
 
-    public function test_machine_report_keeps_updated_at_order(): void
+    public function test_machine_report_defaults_to_qc_visual_descending_and_keeps_unscanned_last(): void
     {
-        $this->produk('PERTAMA', ['2026-11-05 10:00:00'])->update(['updated_at' => '2026-11-01 10:00:00']);
-        $this->produk('KEDUA', ['2026-11-01 10:00:00'])->update(['updated_at' => '2026-11-05 10:00:00']);
+        $this->produk('PERTAMA', ['2026-11-05 10:00:00']);
+        $this->produk('KEDUA', ['2026-11-01 10:00:00']);
+        $this->produk('BELUM');
 
         $this->get(route('laporan.trace.mesin'))->assertInertia(fn (Assert $page) => $page
-            ->where('produks.data.0.qrcode', 'KEDUA')->where('produks.data.1.qrcode', 'PERTAMA'));
+            ->where('filters.qc_order', 'desc')
+            ->where('produks.data.0.qrcode', 'PERTAMA')
+            ->where('produks.data.1.qrcode', 'KEDUA')
+            ->where('produks.data.2.qrcode', 'BELUM'));
     }
 }

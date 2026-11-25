@@ -27,23 +27,29 @@ const props = defineProps<{
         to: number;
         total: number;
     };
-    filters: { search: string; jenis: string | null };
+    filters: { search?: string; jenis?: string | null; qc_order?: string; qc_dari?: string; qc_sampai?: string };
 }>();
 
 const search = ref(props.filters.search || "");
 const jenis = ref(props.filters.jenis || "all");
+const qcOrder = ref(props.filters.qc_order || "desc");
+const qcDari = ref(props.filters.qc_dari || "");
+const qcSampai = ref(props.filters.qc_sampai || "");
 let timeout: any;
 
 watch(search, (value) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => go(), 500);
 });
-watch(jenis, () => go());
+watch([jenis, qcOrder], () => go());
 
 const go = () => {
     router.get(route("laporan.trace.mesin"), {
         search: search.value || undefined,
         jenis: jenis.value === "all" ? undefined : jenis.value || undefined,
+        qc_order: qcOrder.value,
+        qc_dari: qcDari.value || undefined,
+        qc_sampai: qcSampai.value || undefined,
     }, { preserveState: true, replace: true });
 };
 
@@ -90,6 +96,32 @@ const cleanLabel = (label: string) => {
                 </div>
             </div>
         </div>
+
+        <form class="flex flex-wrap items-end gap-3" @submit.prevent="go">
+            <div class="space-y-1">
+                <label for="qc-order" class="text-xs font-semibold">Urutan tanggal QC Visual</label>
+                <Select v-model="qcOrder">
+                    <SelectTrigger id="qc-order" class="w-52"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="desc">Terbaru (DESC)</SelectItem>
+                        <SelectItem value="asc">Terlama (ASC)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <div class="space-y-1">
+                <label for="qc-dari" class="text-xs font-semibold">QC Visual dari</label>
+                <Input id="qc-dari" v-model="qcDari" type="date" :max="qcSampai || undefined" />
+            </div>
+            <div class="space-y-1">
+                <label for="qc-sampai" class="text-xs font-semibold">QC Visual sampai</label>
+                <Input id="qc-sampai" v-model="qcSampai" type="date" :min="qcDari || undefined" />
+            </div>
+            <Button type="submit">Terapkan</Button>
+            <Button type="button" variant="outline" @click="qcDari = ''; qcSampai = ''; go()">Hapus tanggal</Button>
+            <p v-if="$page.props.errors.qc_dari || $page.props.errors.qc_sampai" class="w-full text-xs text-red-600">
+                {{ $page.props.errors.qc_dari || $page.props.errors.qc_sampai }}
+            </p>
+        </form>
 
         <Card class="border-none shadow-sm overflow-hidden">
             <CardHeader class="pb-2">

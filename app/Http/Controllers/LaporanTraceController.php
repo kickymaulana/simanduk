@@ -16,6 +16,10 @@ class LaporanTraceController extends Controller
 
     private const CASTING = 'Casting';
 
+    private const OVEN_SUSUN = 'Oven Susun';
+
+    private const OVEN_BONGKAR = 'Oven Bongkar';
+
     private function queryProduk(Request $request, bool $urutQcVisual = false)
     {
         $query = Produk::query()
@@ -70,6 +74,8 @@ class LaporanTraceController extends Controller
         $ops = [];
         $tglQcVisual = null;
         $waktuSolar = null;
+        $waktuOvenSusun = null;
+        $waktuOvenBongkar = null;
         $shiftCasting = null;
         $rejects = [];
 
@@ -88,6 +94,12 @@ class LaporanTraceController extends Controller
             }
             if ($prosesName === self::CASTING && ! $shiftCasting) {
                 $shiftCasting = $pp->sesiKerja?->shift?->shift;
+            }
+            if ($prosesName === self::OVEN_SUSUN && ! $waktuOvenSusun) {
+                $waktuOvenSusun = $pp->created_at;
+            }
+            if ($prosesName === self::OVEN_BONGKAR && ! $waktuOvenBongkar) {
+                $waktuOvenBongkar = $pp->created_at;
             }
             // Item reject hanya diambil dari proses QC Visual & Dimensi
             // dan hanya yang berstatus Buang (final), bukan toleransi (In Proses).
@@ -141,8 +153,8 @@ class LaporanTraceController extends Controller
                 'visco' => null,
             ],
             'oven' => [
-                'susun' => $produk->oven?->oven,
-                'bongkar' => null,
+                'susun' => $waktuOvenSusun?->translatedFormat('d M, H:i'),
+                'bongkar' => $waktuOvenBongkar?->translatedFormat('d M, H:i'),
                 'temp' => null,
             ],
         ];
@@ -160,11 +172,11 @@ class LaporanTraceController extends Controller
 
     public function mesin(Request $request)
     {
-        $produks = $this->queryProduk($request)->through(fn ($p) => $this->transformProduk($p));
+        $produks = $this->queryProduk($request, true)->through(fn ($p) => $this->transformProduk($p));
 
         return Inertia::render('LaporanTrace/Mesin', [
             'produks' => $produks,
-            'filters' => $request->only(['search', 'jenis']),
+            'filters' => array_merge(['qc_order' => 'desc'], $request->only(['search', 'jenis', 'qc_order', 'qc_dari', 'qc_sampai'])),
         ]);
     }
 }
