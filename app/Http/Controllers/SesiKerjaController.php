@@ -75,7 +75,7 @@ class SesiKerjaController extends Controller
             'jenis' => 'required|in:Body,Tangki',
             'user_ids'  => 'nullable|array', // ID anggota yang dipilih
             'user_ids.*'=> 'exists:users,id',
-            'target' => 'nullable|integer|min:1',
+            'target' => 'nullable|integer|min:1|max:200',
             'tanggal_masuk' => 'required|date',
         ]);
         $validated['leader_id'] = Auth::id();
@@ -222,7 +222,7 @@ class SesiKerjaController extends Controller
             'jenis' => 'required|in:Body,Tangki',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
-            'target' => 'nullable|integer|min:1',
+            'target' => 'nullable|integer|min:1|max:200',
             'tanggal_masuk' => 'required|date',
         ]);
 

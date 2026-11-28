@@ -49,7 +49,7 @@ const submit = () => {
     if (!form.shift_id) errors.shift_id = 'Wajib pilih shift.';
     if (!form.proses_id) errors.proses_id = 'Wajib pilih proses.';
     if (!form.jenis) errors.jenis = 'Wajib pilih jenis produksi.';
-    if (!form.target) errors.target = 'Target Produk diperlukan.';
+    if (form.target !== "" && (!Number.isInteger(Number(form.target)) || Number(form.target) < 1 || Number(form.target) > 200)) errors.target = 'Target harus bilangan bulat antara 1 dan 200 unit.';
     if (!form.tanggal_masuk) errors.tanggal_masuk = 'Wajib pilih tanggal masuk.';
     
     if (Object.keys(errors).length) {
@@ -155,10 +155,12 @@ const submit = () => {
                                 v-model="form.target"
                                 placeholder="Contoh: 50"
                                 min="1"
+                                max="200"
+                                step="1"
                                 class="w-full"
                             />
                             <p class="text-[10px] text-muted-foreground italic">
-                                Opsional. Jumlah produk yang diharapkan selesai dalam sesi ini.
+                                Opsional. Isi bilangan bulat 1–200 unit untuk semua proses.
                             </p>
                             <p v-if="form.errors.target" class="text-[10px] text-destructive font-medium italic">
                                 {{ form.errors.target }}
